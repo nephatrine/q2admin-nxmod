@@ -77,7 +77,10 @@ qboolean ReadVoteFile(char *votename)
 			return FALSE;
 		}
 		
-	votefile = fopen(votename, "rt");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), votename);
+	
+	votefile = fopen(bpbuffer, "rt");
 	if(!votefile)
 		{
 			return FALSE;

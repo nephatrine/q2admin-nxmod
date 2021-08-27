@@ -62,7 +62,10 @@ qboolean ReadDisableFile(char *disablename)
 			return FALSE;
 		}
 		
-	disablefile = fopen(disablename, "rt");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), disablename);
+	
+	disablefile = fopen(bpbuffer, "rt");
 	if(!disablefile)
 		{
 			return FALSE;

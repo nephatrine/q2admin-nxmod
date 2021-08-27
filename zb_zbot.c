@@ -1506,7 +1506,9 @@ void Read_Admin_cfg(void)
 	int elements;
 
 	snprintf(name, sizeof name, "%s/q2adminlogin.txt", moddir);
-	f = fopen(name, "r");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
+	f = fopen(bpbuffer, "r");
 	if (f)
 	{
 		i = 0;
@@ -1531,7 +1533,9 @@ void Read_Admin_cfg(void)
 		gi.dprintf("WARNING: %s could not be found\n", name);
 
 	snprintf(name, sizeof name, "%s/q2adminbypass.txt", moddir);
-	f = fopen(name, "r");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
+	f = fopen(bpbuffer, "r");
 	if (f)
 	{
 		i = 0;
@@ -2096,7 +2100,10 @@ void whois_write_file(void)
 
 	snprintf(name, sizeof name, "%s/q2adminwhois.txt", moddir);
 
-	f = fopen (name, "wb");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
+
+	f = fopen (bpbuffer, "wb");
 	if (!f)
 	{
 		return;
@@ -2162,7 +2169,10 @@ void whois_read_file(void)
 
 	snprintf(name, sizeof name, "%s/q2adminwhois.txt", moddir);
 
-	f = fopen (name, "rb");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
+
+	f = fopen (bpbuffer, "rb");
 	if (!f)
 	{
 		gi.dprintf ("WARNING: %s could not be found\n", name);

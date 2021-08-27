@@ -174,7 +174,10 @@ qboolean loadLogListFile(char *filename)
 	unsigned int i, uptoLine = 0;
 	int lognum;
 	
-	loglist = fopen(filename, "rt");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), filename);
+	
+	loglist = fopen(bpbuffer, "rt");
 	if(!loglist)
 		{
 			return FALSE;

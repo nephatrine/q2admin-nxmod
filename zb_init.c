@@ -146,6 +146,8 @@ int minfpsallowed = 0;
 char buffer[0x10000];
 char buffer2[256];
 
+char bpbuffer[MAX_OSPATH];
+
 char adminpassword[256];
 
 char customServerCmd[256];
@@ -565,7 +567,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	motd[0] = 0;
 	if(zbotmotd[0])
 		{
-			motdptr = fopen(zbotmotd, "rt");
+			// from 3zb2-zigflag
+			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), zbotmotd);
+			
+			motdptr = fopen(bpbuffer, "rt");
 			
 			if(!motdptr)
 				{
