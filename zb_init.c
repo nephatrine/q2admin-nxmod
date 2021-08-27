@@ -34,9 +34,6 @@ game_export_t  *dllglobals;
 
 cvar_t  *rcon_password, *gamedir, *maxclients, *logfile, *rconpassword, *port, *q2admintxt, *q2adminbantxt;	// UPDATE
 
-// from 3zb2-zigflag
-cvar_t *basepath;
-
 qboolean quake2dirsupport = TRUE;
 
 char dllname[512];
@@ -394,9 +391,6 @@ void InitGame (void)
 	proxyinfo = proxyinfoBase;
 	proxyinfo += 1;
 	proxyinfo[-1].inuse = 1;
-	
-	// from 3zb2-zigflag
-	basepath = gi.cvar("basepath", DEFAULTPATH, CVAR_NOSET);
 	
 	reconnectproxyinfo = gi.TagMalloc (maxclients->value  * sizeof(proxyreconnectinfo_t), TAG_GAME);
 	q2a_memset(reconnectproxyinfo, 0x0, (size_t)maxclients->value * sizeof(proxyreconnectinfo_t));
