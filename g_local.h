@@ -35,6 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GAME_INCLUDE
 #include "game.h"
 
+// from 3zb2-zigflag
+#define DEFAULTPATH "."
+#define GET_BASEPATH_STR() ((strlen(basepath->string)) == 0 ? DEFAULTPATH : basepath->string)
+
 #include <ctype.h>
 
 /* Use our local regex.c and .h on Windows but
@@ -819,6 +823,9 @@ extern game_import_t gi;
 extern game_export_t globals;
 extern game_export_t *dllglobals;
 extern cvar_t   *rcon_password, *gamedir, *maxclients, *logfile, *rconpassword, *port, *q2admintxt, *q2adminbantxt; // UPDATE
+
+// from 3zb2-zigflag
+extern cvar_t *basepath;
 
 extern char    dllname[512];
 extern char    zbotuserdisplay[256];

@@ -1762,7 +1762,11 @@ qboolean readCfgFile(char *cfgfilename)
 	char buff1[256];
 	char buff2[256];
 	
-	cfgfile = fopen(cfgfilename, "rt");
+	// from 3zb2-zigflag
+	char buffer[MAX_QPATH];
+	sprintf(buffer, "%s/%s", GET_BASEPATH_STR(), cfgfilename);
+	
+	cfgfile = fopen(buffer, "rt");
 	if(!cfgfile) return FALSE;
 	
 	while(fgets(buffer, 256, cfgfile) != NULL)
