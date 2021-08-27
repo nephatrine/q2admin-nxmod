@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // from 3zb2-zigflag
 #define DEFAULTPATH "."
 #define GET_BASEPATH_STR() ((strlen(basepath->string)) == 0 ? DEFAULTPATH : basepath->string)
+#define GET_SAVEPATH_STR() ((strlen(savepath->string)) == 0 ? DEFAULTPATH : savepath->string)
 
 #include <ctype.h>
 
@@ -826,6 +827,7 @@ extern cvar_t   *rcon_password, *gamedir, *maxclients, *logfile, *rconpassword, 
 
 // from 3zb2-zigflag
 extern cvar_t *basepath;
+extern cvar_t *savepath;
 
 extern char    dllname[512];
 extern char    zbotuserdisplay[256];

@@ -555,7 +555,10 @@ void logEvent(enum zb_logtypesenum ltype, int client, edict_t *ent, char *messag
 									q2a_strcpy(logname, logFiles[i].filename);
 								}
 								
-							logfilePtr = fopen(logname, "at");
+							// save writables in homedir if set
+							sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
+							
+							logfilePtr = fopen(bpbuffer, "at");
 							
 							if(logfilePtr)
 								{
@@ -616,7 +619,10 @@ void displayLogFileCont(edict_t *ent, int client, long logfilereadpos)
 			q2a_strcpy(logname, logFiles[logNum].filename);
 		}
 		
-	logfilePtr = fopen(logname, "rt");
+	// save writables in homedir if set
+	sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
+	
+	logfilePtr = fopen(bpbuffer, "rt");
 	
 	if(logfilePtr)
 		{
@@ -672,7 +678,10 @@ void clearlogfileRun(int startarg, edict_t *ent, int client)
 							q2a_strcpy(logname, logFiles[logToDisplay].filename);
 						}
 						
-					logfilePtr = fopen(logname, "w+t");
+					// save writables in homedir if set
+					sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
+					
+					logfilePtr = fopen(bpbuffer, "w+t");
 					if(!logfilePtr)
 						{
 							gi.cprintf (ent, PRINT_HIGH, "logfilename \"%s\" couldn't be opened!\n", logFiles[logToDisplay].filename);

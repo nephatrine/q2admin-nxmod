@@ -48,6 +48,7 @@ typedef game_export_t  *GAMEAPI (game_import_t *import);
 
 // from 3zb2-zigflag
 cvar_t *basepath;
+cvar_t *savepath;
 
 char  zbot_teststring1[] = ZBOT_TESTSTRING1;
 char  zbot_teststring_test1[] = ZBOT_TESTSTRING_TEST1;
@@ -153,6 +154,7 @@ Q2_DLL_EXPORTED game_export_t *GetGameAPI(game_import_t *import)
 	
 	// from 3zb2-zigflag
 	basepath = gi.cvar("basepath", DEFAULTPATH, CVAR_NOSET);
+	savepath = gi.cvar("savepath", DEFAULTPATH, CVAR_NOSET);
 	
 	port = gi.cvar("port", "", 0);
 	rcon_password = gi.cvar("rcon_password", "", 0) ; // UPDATE

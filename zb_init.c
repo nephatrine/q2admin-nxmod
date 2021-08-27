@@ -2031,7 +2031,14 @@ void ClientBegin (edict_t *ent)
 			addCmdQueue(client, QCMD_CHECKVARTESTS, (float)checkvar_poll_time, 0, 0);
 			
 			sprintf(buffer, "%s/qconsole.log", moddir);
-			q2logfile = fopen(buffer, "rt");
+			// check in homedir if set
+			sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), buffer);
+			q2logfile = fopen(bpbuffer, "rt");
+			if(!q2logfile)
+				{
+					sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
+					q2logfile = fopen(bpbuffer, "rt");
+				}
 			if(q2logfile)
 				{
 					fseek(q2logfile, 0, SEEK_END);
