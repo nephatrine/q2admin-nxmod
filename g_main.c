@@ -28,44 +28,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-#ifdef __GNUC__
+#if defined(WIN32)
+#include <windows.h>
+#elif defined(__GNUC__)
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #include <dlfcn.h>
-#elif defined(WIN32)
-#include <windows.h>
 #endif
 
-#ifdef __GNUC__
-void *hdll = NULL;
-
-#ifdef LINUXAXP
-	#define DLLNAME   "gameaxp.real.so"
-#elif defined(SOLARIS_INTEL)
-	#define DLLNAME   "gamei386.real.so"
-#elif defined(SOLARIS_SPARC)
-	#define DLLNAME   "gamesparc.real.so"
-#elif defined (LINUX)
-#if defined __i386__
-	#define DLLNAME "gamei386.real.so"
-#elif defined __x86_64__
-	#define DLLNAME "gamex86_64.real.so"
-#elif defined __arm__ 
-	#define DLLNAME "gamearm.real.so"
-#elif defined __aarch64__
-	#define DLLNAME "gameaarch64.real.so"
-#else
-	#error Unknown architecture
-#endif
-#else
-	#error Unknown GNUC OS
-#endif
-
-#elif defined(WIN32)
+#if defined(WIN32)
 HINSTANCE hdll;
-#define DLLNAME   "gamex86.real.dll"  // Not sure how this was supposed to work, but it was loading itself and overwriting its own gi.vars when just called "gamex86.dll"
-#define DLLNAMEMODDIR "gamex86.real.dll"
-#else
-#error Unknown OS
+#define DLLNAME       "game.real.dll"
+#define DLLNAMEMODDIR "game.real.dll"
+#elif defined(__GNUC__)
+void *hdll = NULL;
+#define DLLNAME       "game.real.so"
 #endif
 
 typedef game_export_t  *GAMEAPI (game_import_t *import);
@@ -111,10 +87,10 @@ void ShutdownGame (void)
 		}
 	gi.dprintf ("==== Shutdown (Q2Admin) ====\n");
 		
-#ifdef __GNUC__
-	dlclose(hdll);
-#elif defined(WIN32)
+#if defined(WIN32)
 	FreeLibrary(hdll);
+#elif defined(__GNUC__)
+	dlclose(hdll);
 #endif
 	
 	dllloaded = FALSE;
@@ -231,11 +207,7 @@ game_export_t *GetGameAPI(game_import_t *import)
 	zbot_testchar1 = '0' + (int)(9.9 * random());
 	zbot_testchar2 = '0' + (int)(9.9 * random());
 	
-#ifdef __GNUC__
-	loadtype = soloadlazy ? RTLD_LAZY : RTLD_NOW;
-	sprintf(dllname, "%s/%s", moddir, DLLNAME);
-	hdll = dlopen(dllname, loadtype);
-#elif defined(WIN32)
+#if defined(WIN32)
 	if (quake2dirsupport)
 		{
 			sprintf(dllname, "%s/%s", moddir, DLLNAME);
@@ -246,6 +218,10 @@ game_export_t *GetGameAPI(game_import_t *import)
 		}
 	
 	hdll = LoadLibrary(dllname);
+#elif defined(__GNUC__)
+	loadtype = soloadlazy ? RTLD_LAZY : RTLD_NOW;
+	sprintf(dllname, "%s/%s", moddir, DLLNAME);
+	hdll = dlopen(dllname, loadtype);
 #endif
 	
 	if (hdll == NULL)
@@ -253,15 +229,13 @@ game_export_t *GetGameAPI(game_import_t *import)
 			// try the baseq2 directory...
 			sprintf(dllname, "baseq2/%s", DLLNAME);
 			
-#ifdef __GNUC__
-			hdll = dlopen(dllname, loadtype);
-#elif defined(WIN32)
+#if defined(WIN32)
 			hdll = LoadLibrary(dllname);
+#elif defined(__GNUC__)
+			hdll = dlopen(dllname, loadtype);
 #endif
 			
-#ifdef __GNUC__
-			sprintf(dllname, "%s/%s", moddir, DLLNAME);
-#elif defined(WIN32)
+#if defined(WIN32)
 			if (quake2dirsupport)
 				{
 					sprintf(dllname, "%s/%s", moddir, DLLNAME);
@@ -270,6 +244,8 @@ game_export_t *GetGameAPI(game_import_t *import)
 				{
 					sprintf(dllname, "%s/%s", moddir, DLLNAMEMODDIR);
 				}
+#elif defined(__GNUC__)
+			sprintf(dllname, "%s/%s", moddir, DLLNAME);
 #endif
 			
 			if (hdll == NULL)
@@ -289,18 +265,18 @@ game_export_t *GetGameAPI(game_import_t *import)
 				}
 		}
 		
-#ifdef __GNUC__
-	getapi = (GAMEAPI *)dlsym(hdll, "GetGameAPI");
-#elif defined(WIN32)
+#if defined(WIN32)
 	getapi = (GAMEAPI *)GetProcAddress (hdll, "GetGameAPI");
+#elif defined(__GNUC__)
+	getapi = (GAMEAPI *)dlsym(hdll, "GetGameAPI");
 #endif
 	
 	if (getapi == NULL)
 		{
-#ifdef __GNUC__
-			dlclose(hdll);
-#elif defined(WIN32)
+#if defined(WIN32)
 			FreeLibrary(hdll);
+#elif defined(__GNUC__)
+			dlclose(hdll);
 #endif
 			
 			gi.dprintf ("No \"GetGameApi\" entry in DLL %s.\n", dllname);
