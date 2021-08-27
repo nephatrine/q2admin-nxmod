@@ -56,7 +56,10 @@ qboolean ReadBanFile(char *bfname)
 	char strbuffer[256];
 	unsigned int uptoLine = 0;
 	
-	banfile = fopen(bfname, "rt");
+	// from 3zb2-zigflag
+	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), bfname);
+	
+	banfile = fopen(bpbuffer, "rt");
 	if(!banfile)
 		{
 			return FALSE;
@@ -1686,7 +1689,10 @@ void banRun(int startarg, edict_t *ent, int client)
 							sprintf(buffer, "%s/%s", moddir, BANLISTFILE);
 						}
 						
-					banlistfptr = fopen(buffer, "at");
+					// from 3zb2-zigflag
+					sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
+					
+					banlistfptr = fopen(bpbuffer, "at");
 					if(!banlistfptr)
 						{
 							gi.cprintf(ent, PRINT_HIGH, "Error opening banfile!\n");
@@ -2406,7 +2412,10 @@ void chatbanRun(int startarg, edict_t *ent, int client)
 					sprintf(buffer, "%s/%s", moddir, BANLISTFILE);
 				}
 				
-			banlistfptr = fopen(buffer, "at");
+			// from 3zb2-zigflag
+			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
+			
+			banlistfptr = fopen(bpbuffer, "at");
 			if(!banlistfptr)
 				{
 					gi.cprintf(ent, PRINT_HIGH, "Error opening banfile!\n");
