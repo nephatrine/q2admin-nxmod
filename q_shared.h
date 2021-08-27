@@ -93,7 +93,14 @@ typedef enum{false, true} qboolean;
 #define MAX_TOKEN_CHARS  128  // max length of an individual token
 
 #define MAX_QPATH   64  // max length of a quake game pathname
-#define MAX_OSPATH   128  // max length of a filesystem pathname
+
+#ifdef _WIN32
+ #define MAX_OSPATH 256
+ #define Q2_DLL_EXPORTED  __declspec(dllexport)
+#else // not Win32 (Linux, BSD, Mac, ..)
+ #define MAX_OSPATH 4096
+ #define Q2_DLL_EXPORTED  __attribute__((__visibility__("default")))
+#endif
 
 //
 // per-level limits
