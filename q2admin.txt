@@ -676,4 +676,4 @@ maxmsglevel "3"
 ;
 ; Check the clients IP Address is valid when the client is connecting.
 ;
-checkclientipaddress "Yes"
+checkclientipaddress "No"
