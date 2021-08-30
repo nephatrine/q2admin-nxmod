@@ -1,0 +1,20 @@
+{
+    "logging": {
+        "level": "info",
+        "filename": "q2discord.log",
+        "quiet": true,
+        "overwrite": true,
+        "use_color": false,
+        "http": {
+            "enable": false,
+            "filename": "q2discord-http.log"
+        }
+    },
+    "discord": {
+        "token": "",
+        "default_prefix": {
+            "enable": false,
+            "prefix": "!"
+        }
+    }
+}

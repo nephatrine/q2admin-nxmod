@@ -1396,6 +1396,9 @@ void cprintf_internal(edict_t *ent, int printlevel, char *fmt, ...)
 	
 	if(q2adminrunmode == 0)
 		{
+#ifdef USE_DISCORD
+			if(ent == NULL) q2d_message(printlevel, cbuffer);
+#endif
 			gi.cprintf(ent, printlevel, "%s", cbuffer);
 			return;
 		}
@@ -1486,6 +1489,10 @@ void cprintf_internal(edict_t *ent, int printlevel, char *fmt, ...)
 				}
 		}
 		
+#ifdef USE_DISCORD
+	if(ent == NULL) q2d_message(printlevel, cbuffer);
+#endif
+	
 	gi.cprintf(ent, printlevel,"%s", cbuffer);
 	
 	if(printlevel== PRINT_CHAT && clienti!=-1 && ent == NULL &&(floodinfo.chatFloodProtect|| proxyinfo[clienti].floodinfo.chatFloodProtect))
@@ -1513,6 +1520,9 @@ void bprintf_internal(int printlevel, char *fmt,...)
 	
 	if(q2adminrunmode == 0)
 		{
+#ifdef USE_DISCORD
+			q2d_message(printlevel, cbuffer);
+#endif
 			gi.bprintf(printlevel, "%s", cbuffer);
 			return;
 		}
@@ -1574,6 +1584,10 @@ void bprintf_internal(int printlevel, char *fmt,...)
 				}
 		}
 		
+#ifdef USE_DISCORD
+	q2d_message(printlevel, cbuffer);
+#endif
+	
 	gi.bprintf(printlevel, "%s", cbuffer);
 	
 	if(printlevel == PRINT_CHAT && clienti != -1 && (floodinfo.chatFloodProtect || proxyinfo[clienti].floodinfo.chatFloodProtect))
@@ -3213,7 +3227,6 @@ qboolean doClientCommand(edict_t *ent, int client, qboolean *checkforfloodafter)
 				
 			*checkforfloodafter = TRUE;
 		}
-		
 		
 //	if(adminpassword[0] && proxyinfo[client].admin && cmd[0] == '!')
 //		{

@@ -52,6 +52,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <regex.h>
 #endif
 
+#include "zb_discord.h"
+FILE *q2a_fopen(char *filename, const size_t n, const char *mode);
+
 //*** UPDATE START ***
 #define PRIVATE_COMMANDS  8
 #define ALLOWED_MAXCMDS   50

@@ -81,16 +81,24 @@ void ShutdownGame (void)
 			STARTPERFORMANCE(2);
 		}
 		
+#ifdef USE_DISCORD
+	q2d_message(PRINT_HIGH, "=== Closing Time ===");
+#endif
+	
 	// reset the password just in case something has gone wrong...
 	lrcon_reset_rcon_password(0, 0, 0);
 	dllglobals->Shutdown();
+	
+#ifdef USE_DISCORD
+	q2d_exit();
+#endif
 	
 	if (q2adminrunmode)
 		{
 			STOPPERFORMANCE(2, "mod->ShutdownGame", 0, NULL);
 		}
 	gi.dprintf ("==== Shutdown (Q2Admin) ====\n");
-		
+	
 #if defined(WIN32)
 	FreeLibrary(hdll);
 #elif defined(__GNUC__)

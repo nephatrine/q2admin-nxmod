@@ -28,6 +28,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
+FILE *q2a_fopen(char *filename, const size_t n, const char *mode)
+{
+    static char q2a_filepath[MAX_OSPATH];
+    FILE *retval = NULL;
+    
+    snprintf(q2a_filepath, sizeof(q2a_filepath), "%s/%s", GET_SAVEPATH_STR(), filename);
+    retval = fopen(q2a_filepath, mode);
+    if (retval)
+    {
+        if (n)
+        {
+            strncpy(filename, q2a_filepath, n);
+            filename[n - 1] = 0;
+        }
+        return retval;
+    }
+    
+    snprintf(q2a_filepath, sizeof(q2a_filepath), "%s/%s", GET_BASEPATH_STR(), filename);
+    retval = fopen(q2a_filepath, mode);
+    if (retval)
+    {
+        if (n)
+        {
+            strncpy(filename, q2a_filepath, n);
+            filename[n - 1] = 0;
+        }
+        return retval;
+    }
+    
+    return fopen(filename, mode);
+}
+
 game_import_t  gi;
 game_export_t  globals;
 game_export_t  *dllglobals;
@@ -371,9 +403,16 @@ void InitGame (void)
 			gi.dprintf ("(Q2Admin runlevel %d)\n", q2adminrunmode);
 		}
 		
+#ifdef USE_DISCORD
+	q2d_init();
+#endif
+	
 	if(q2adminrunmode == 0)
 		{
 			dllglobals->Init();
+#ifdef USE_DISCORD
+			q2d_message(PRINT_HIGH, "=== Open For Business ===");
+#endif
 			copyDllInfo();
 			return;
 		}
@@ -382,6 +421,10 @@ void InitGame (void)
 	STARTPERFORMANCE(2);
 	dllglobals->Init(); //be carefull with all functions called from this one (like dprintf_internal) to not use proxyinfo pointer because it's not initialized yet. -Harven
 	STOPPERFORMANCE(2, "mod->InitGame", 0, NULL);
+	
+#ifdef USE_DISCORD
+	q2d_message(PRINT_HIGH, "=== Open For Business ===");
+#endif
 	
 	copyDllInfo();
 	
@@ -490,6 +533,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	if(q2adminrunmode == 0)
 		{
 			dllglobals->SpawnEntities(mapname, backupentities, spawnpoint);
+#ifdef USE_DISCORD
+			snprintf(buffer, sizeof(buffer), "Loading Map (`%s`)", mapname);
+			q2d_message(PRINT_HIGH, buffer);
+#endif
 			copyDllInfo();
 			return;
 		}
@@ -662,6 +709,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	STARTPERFORMANCE(2);
 	dllglobals->SpawnEntities(mapname, backupentities, spawnpoint);
 	STOPPERFORMANCE(2, "mod->SpawnEntities", 0, NULL);
+	
+#ifdef USE_DISCORD
+	snprintf(buffer, sizeof(buffer), "Loading Map (`%s`)", mapname);
+	q2d_message(PRINT_HIGH, buffer);
+#endif
 	
 	copyDllInfo();
 	

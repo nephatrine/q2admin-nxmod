@@ -9,6 +9,8 @@
 # sudo apt-get install libc6-dev-i386
 # On Ubuntu 16.x use sudo apt install libc6-dev-i386
 
+WITH_DISCORD:=yes
+
 # Stole This From Yamagi
 
 # Detect the OS
@@ -223,7 +225,12 @@ endif
 
 # Required libraries.
 ifeq ($(Q2A_OSTYPE),Linux)
+ifeq ($(WITH_DISCORD),yes)
+override CFLAGS += -DUSE_DISCORD
+LDLIBS ?= -ldiscord -lcurl -lcrypto -lpthread -lm -ldl -rdynamic
+else
 LDLIBS ?= -lm -ldl -rdynamic
+endif
 else ifeq ($(Q2A_OSTYPE),FreeBSD)
 LDLIBS ?= -lm
 else ifeq ($(Q2A_OSTYPE),NetBSD)
@@ -279,7 +286,8 @@ all: q2admin
 config:
 	@echo "Build configuration"
 	@echo "============================"
-	@echo "Q2A_ARCH = $(Q2A_ARCH) COMPILER = $(COMPILER)"
+	@echo "Q2A_ARCH     = $(Q2A_ARCH) COMPILER = $(COMPILER)"
+	@echo "WITH_DISCORD = $(WITH_DISCORD)"
 	@echo "============================"
 	@echo ""
 
@@ -337,7 +345,8 @@ Q2A_OBJS_ = \
 	zb_zbot.o \
 	zb_zbotcheck.o \
 	zb_disable.o \
-	zb_checkvar.o
+	zb_checkvar.o \
+	zb_discord.o
 
 # ----------
 
