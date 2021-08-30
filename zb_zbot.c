@@ -114,17 +114,11 @@ void readIpFromLog(int client, edict_t *ent)
 		}
 		
 	sprintf(buffer, "%s/qconsole.log", moddir);
-	// check in homedir if set
-	sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), buffer);
-	dumpfile = fopen(bpbuffer, "rt");
+	dumpfile = q2a_fopen(buffer, sizeof(buffer), "rt");
 	if(!dumpfile)
 		{
-			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
-			dumpfile = fopen(bpbuffer, "rt");
-			if(!dumpfile)
-				{
-					return;
-				}
+			dumpfile = q2a_fopen("baseq2/qconsole.log", 0, "rt");
+			if(!dumpfile) return;
 		}
 		
 	fseek(dumpfile, 0, SEEK_END);
@@ -166,17 +160,11 @@ int checkForOverflows(edict_t *ent, int client)
 	unsigned int ret = 0;
 	
 	sprintf(buffer, "%s/qconsole.log", moddir);
-	// check in homedir if set
-	sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), buffer);
-	q2logfile = fopen(bpbuffer, "rt");
+	q2logfile = q2a_fopen(buffer, sizeof(buffer), "rt");
 	if(!q2logfile)
 		{
-			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
-			q2logfile = fopen(bpbuffer, "rt");
-			if(!q2logfile)
-				{
-					return 0;  // assume ok
-				}
+			q2logfile = q2a_fopen("baseq2/qconsole.log", 0, "rt");
+			if(!q2logfile) return 0;  // assume ok
 		}
 		
 	fseek(q2logfile, proxyinfo[client].logfilecheckpos, SEEK_SET);
@@ -1520,9 +1508,7 @@ void Read_Admin_cfg(void)
 	int elements;
 
 	snprintf(name, sizeof name, "%s/q2adminlogin.txt", moddir);
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
-	f = fopen(bpbuffer, "r");
+	f = q2a_fopen(name, sizeof(name), "r");
 	if (f)
 	{
 		i = 0;
@@ -1547,9 +1533,7 @@ void Read_Admin_cfg(void)
 		gi.dprintf("WARNING: %s could not be found\n", name);
 
 	snprintf(name, sizeof name, "%s/q2adminbypass.txt", moddir);
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
-	f = fopen(bpbuffer, "r");
+	f = q2a_fopen(name, sizeof(name), "r");
 	if (f)
 	{
 		i = 0;
@@ -2114,14 +2098,8 @@ void whois_write_file(void)
 
 	snprintf(name, sizeof name, "%s/q2adminwhois.txt", moddir);
 
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
-
-	f = fopen (bpbuffer, "wb");
-	if (!f)
-	{
-		return;
-	}	
+	f = q2a_fopen (name, sizeof(name), "wb");
+	if (!f) return;
 
 	for (i = 0; i < WHOIS_COUNT; i++)
 	{
@@ -2183,10 +2161,7 @@ void whois_read_file(void)
 
 	snprintf(name, sizeof name, "%s/q2adminwhois.txt", moddir);
 
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), name);
-
-	f = fopen (bpbuffer, "rb");
+	f = q2a_fopen (name, sizeof(name), "rb");
 	if (!f)
 	{
 		gi.dprintf ("WARNING: %s could not be found\n", name);

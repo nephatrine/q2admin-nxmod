@@ -60,10 +60,7 @@ qboolean ReadFloodFile(char *floodname)
 			return FALSE;
 		}
 		
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), floodname);
-	
-	floodfile = fopen(bpbuffer, "rt");
+	floodfile = q2a_fopen(floodname, 0, "rt");
 	if(!floodfile)
 		{
 			return FALSE;

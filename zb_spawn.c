@@ -66,10 +66,7 @@ qboolean ReadSpawnFile(char *spawnname, qboolean onelevelflag)
 			return FALSE;
 		}
 		
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), spawnname);
-	
-	spawnfile = fopen(bpbuffer, "rt");
+	spawnfile = q2a_fopen(spawnname, 0, "rt");
 	if(!spawnfile)
 		{
 			return FALSE;

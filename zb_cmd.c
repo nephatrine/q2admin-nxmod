@@ -1776,10 +1776,7 @@ qboolean readCfgFile(char *cfgfilename)
 	char buff1[256];
 	char buff2[256];
 	
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), cfgfilename);
-	
-	cfgfile = fopen(bpbuffer, "rt");
+	cfgfile = q2a_fopen(cfgfilename, 0, "rt");
 	if(!cfgfile) return FALSE;
 	
 	while(fgets(buffer, 256, cfgfile) != NULL)
@@ -4008,10 +4005,7 @@ void zbotmotdRun(int startarg, edict_t *ent, int client)
 			
 			processstring(zbotmotd, gi.argv(startarg), sizeof(zbotmotd), 0);
 			
-			// from 3zb2-zigflag
-			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), zbotmotd);
-			
-			motdptr = fopen(bpbuffer, "rt");
+			motdptr = q2a_fopen(zbotmotd, sizeof(zbotmotd), "rt");
 			
 			if(!motdptr)
 				{
@@ -4088,10 +4082,7 @@ void stuffClientRun(int startarg, edict_t *ent, int client)
 						
 					processstring(buffer, text, sizeof(buffer) - 1, 0);
 					
-					// from 3zb2-zigflag
-					sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
-					
-					proxyinfo[clienti].stuffFile = fopen(bpbuffer, "rt");
+					proxyinfo[clienti].stuffFile = q2a_fopen(buffer, sizeof(buffer), "rt");
 					
 					if(proxyinfo[clienti].stuffFile)
 						{

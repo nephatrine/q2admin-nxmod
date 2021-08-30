@@ -67,10 +67,7 @@ qboolean ReadLRconFile(char *lrcname)
 			return FALSE;
 		}
 		
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), lrcname);
-	
-	lrconfile = fopen(bpbuffer, "rt");
+	lrconfile = q2a_fopen(lrcname, 0, "rt");
 	if(!lrconfile)
 		{
 			return FALSE;

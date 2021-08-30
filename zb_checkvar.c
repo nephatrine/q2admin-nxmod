@@ -59,10 +59,7 @@ qboolean ReadCheckVarFile(char *checkvarname)
 			return FALSE;
 		}
 		
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), checkvarname);
-	
-	checkvarfile = fopen(bpbuffer, "rt");
+	checkvarfile = q2a_fopen(checkvarname, 0, "rt");
 	if(!checkvarfile)
 		{
 			return FALSE;

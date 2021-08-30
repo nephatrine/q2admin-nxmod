@@ -935,8 +935,6 @@ extern char    customClientCmd[256];
 extern char    customClientCmdConnect[256];
 extern char    customServerCmdConnect[256];
 
-extern char    bpbuffer[MAX_OSPATH];
-
 //r1ch 2005-01-27 insecure lrcon fix BEGIN
 extern qboolean	rcon_insecure;
 //r1ch 2005-01-27 insecure lrcon fix END

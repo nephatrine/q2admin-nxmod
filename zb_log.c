@@ -174,10 +174,7 @@ qboolean loadLogListFile(char *filename)
 	unsigned int i, uptoLine = 0;
 	int lognum;
 	
-	// from 3zb2-zigflag
-	sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), filename);
-	
-	loglist = fopen(bpbuffer, "rt");
+	loglist = q2a_fopen(filename, 0, "rt");
 	if(!loglist)
 		{
 			return FALSE;
@@ -555,10 +552,7 @@ void logEvent(enum zb_logtypesenum ltype, int client, edict_t *ent, char *messag
 									q2a_strcpy(logname, logFiles[i].filename);
 								}
 								
-							// save writables in homedir if set
-							sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
-							
-							logfilePtr = fopen(bpbuffer, "at");
+							logfilePtr = q2a_fopen(logname, sizeof(logname), "at");
 							
 							if(logfilePtr)
 								{
@@ -619,10 +613,7 @@ void displayLogFileCont(edict_t *ent, int client, long logfilereadpos)
 			q2a_strcpy(logname, logFiles[logNum].filename);
 		}
 		
-	// save writables in homedir if set
-	sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
-	
-	logfilePtr = fopen(bpbuffer, "rt");
+	logfilePtr = q2a_fopen(logname, sizeof(logname), "rt");
 	
 	if(logfilePtr)
 		{
@@ -678,10 +669,7 @@ void clearlogfileRun(int startarg, edict_t *ent, int client)
 							q2a_strcpy(logname, logFiles[logToDisplay].filename);
 						}
 						
-					// save writables in homedir if set
-					sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), logname);
-					
-					logfilePtr = fopen(bpbuffer, "w+t");
+					logfilePtr = q2a_fopen(logname, sizeof(logname), "w+t");
 					if(!logfilePtr)
 						{
 							gi.cprintf (ent, PRINT_HIGH, "logfilename \"%s\" couldn't be opened!\n", logFiles[logToDisplay].filename);

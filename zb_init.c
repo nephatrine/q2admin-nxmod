@@ -178,8 +178,6 @@ int minfpsallowed = 0;
 char buffer[0x10000];
 char buffer2[256];
 
-char bpbuffer[MAX_OSPATH];
-
 char adminpassword[256];
 
 char customServerCmd[256];
@@ -614,10 +612,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	motd[0] = 0;
 	if(zbotmotd[0])
 		{
-			// from 3zb2-zigflag
-			sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), zbotmotd);
-			
-			motdptr = fopen(bpbuffer, "rt");
+			motdptr = q2a_fopen(zbotmotd, sizeof(zbotmotd), "rt");
 			
 			if(!motdptr)
 				{
@@ -2083,14 +2078,8 @@ void ClientBegin (edict_t *ent)
 			addCmdQueue(client, QCMD_CHECKVARTESTS, (float)checkvar_poll_time, 0, 0);
 			
 			sprintf(buffer, "%s/qconsole.log", moddir);
-			// check in homedir if set
-			sprintf(bpbuffer, "%s/%s", GET_SAVEPATH_STR(), buffer);
-			q2logfile = fopen(bpbuffer, "rt");
-			if(!q2logfile)
-				{
-					sprintf(bpbuffer, "%s/%s", GET_BASEPATH_STR(), buffer);
-					q2logfile = fopen(bpbuffer, "rt");
-				}
+			q2logfile = q2a_fopen(buffer, sizeof(buffer), "rt");
+			if(!q2logfile) q2logfile = q2a_fopen("baseq2/qconsole.log", 0, "rt");
 			if(q2logfile)
 				{
 					fseek(q2logfile, 0, SEEK_END);
