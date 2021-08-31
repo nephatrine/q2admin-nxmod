@@ -134,7 +134,7 @@ void q2d_on_command_rcon( struct discord * client, const struct discord_user * b
 	int authorized = 0, r = 0;
 	if( q2d_bot.rcuser && msg->author->id == q2d_bot.rcuser )
 		authorized = 1;
-	else if( q2d_bot.rcgroup )
+/*	else if( q2d_bot.rcgroup )
 	{
 		struct discord_permissions_role ** roles = NULL;
 		discord_get_guild_roles( client, msg->guild_id, &roles );
@@ -145,7 +145,7 @@ void q2d_on_command_rcon( struct discord * client, const struct discord_user * b
 					authorized = 1;
 					break;
 				}
-	}
+	} */
 
 	if( authorized )
 	{
