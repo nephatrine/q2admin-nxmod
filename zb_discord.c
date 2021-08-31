@@ -18,21 +18,30 @@ static u64_snowflake_t q2d_create_thread( struct discord * client, const u64_sno
 {
 	if( !client || !channel || !name || !name[0] ) return channel;
 
+	u64_snowflake_t rv = 0;
+
 	int t = 0;
 
 	struct discord_thread_response_body active_list;
+	discord_thread_response_body_init( &active_list );
 	discord_list_active_threads( client, channel, &active_list );
 	if( active_list.threads )
 		for( t = 0; active_list.threads[t]; ++t )
-			if( !strcmp( name, active_list.threads[t]->name ) ) return active_list.threads[t]->id;
+			if( !strcmp( name, active_list.threads[t]->name ) )
+			{
+				rv = active_list.threads[t]->id;
+				break;
+			}
+	discord_thread_response_body_cleanup( &active_list );
+	if( rv ) return rv;
 
 	struct discord_channel thread;
 	discord_channel_init( &thread );
-
 	struct discord_start_thread_without_message_params params = { .name = name, .type = DISCORD_CHANNEL_GUILD_PUBLIC_THREAD };
-	if( discord_start_thread_without_message( client, channel, &params, &thread ) == ORCA_OK ) return thread.id;
+	if( discord_start_thread_without_message( client, channel, &params, &thread ) == ORCA_OK ) rv = thread.id;
+	discord_channel_cleanup( &thread );
 
-	return channel;
+	return rv ? rv : channel;
 }
 
 static void q2d_queue_add( char * cmd )
@@ -50,11 +59,10 @@ static void q2d_queue_add( char * cmd )
 
 		q2d_queue_last = newcmd;
 		pthread_mutex_unlock( &q2d_queue_lock );
+		return;
 	}
-	else
-	{
-		free( newcmd );
-	}
+
+	free( newcmd );
 }
 
 static void q2d_queue_free()
@@ -134,18 +142,13 @@ void q2d_on_command_rcon( struct discord * client, const struct discord_user * b
 	int authorized = 0, r = 0;
 	if( q2d_bot.rcuser && msg->author->id == q2d_bot.rcuser )
 		authorized = 1;
-/*	else if( q2d_bot.rcgroup )
-	{
-		struct discord_permissions_role ** roles = NULL;
-		discord_get_guild_roles( client, msg->guild_id, &roles );
-		if( roles )
-			for( r = 0; roles[r]; ++r )
-				if( roles[r]->id == q2d_bot.rcgroup )
-				{
-					authorized = 1;
-					break;
-				}
-	} */
+	else if( q2d_bot.rcgroup && msg->member->roles )
+		for( r = 0; msg->member->roles[r]; ++r )
+			if( msg->member->roles[r]->value == q2d_bot.rcgroup )
+			{
+				authorized = 1;
+				break;
+			}
 
 	if( authorized )
 	{
