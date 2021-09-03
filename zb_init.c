@@ -402,14 +402,14 @@ void InitGame (void)
 		}
 		
 #ifdef USE_DISCORD
-	q2d_init();
+	q2d_initialize();
 #endif
 	
 	if(q2adminrunmode == 0)
 		{
 			dllglobals->Init();
 #ifdef USE_DISCORD
-			q2d_message(PRINT_HIGH, "=== Open For Business ===");
+			q2d_message_to_discord2(PRINT_HIGH, "**=== Open For Business ===**");
 #endif
 			copyDllInfo();
 			return;
@@ -421,7 +421,7 @@ void InitGame (void)
 	STOPPERFORMANCE(2, "mod->InitGame", 0, NULL);
 	
 #ifdef USE_DISCORD
-	q2d_message(PRINT_HIGH, "=== Open For Business ===");
+	q2d_message_to_discord2(PRINT_HIGH, "**=== Open For Business ===**");
 #endif
 	
 	copyDllInfo();
@@ -532,8 +532,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		{
 			dllglobals->SpawnEntities(mapname, backupentities, spawnpoint);
 #ifdef USE_DISCORD
-			snprintf(buffer, sizeof(buffer), "Loading Map (`%s`)", mapname);
-			q2d_message(PRINT_HIGH, buffer);
+			q2d_message_to_discord2(PRINT_HIGH, va("Loading Map (`%s`)", mapname));
 #endif
 			copyDllInfo();
 			return;
@@ -706,8 +705,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	STOPPERFORMANCE(2, "mod->SpawnEntities", 0, NULL);
 	
 #ifdef USE_DISCORD
-	snprintf(buffer, sizeof(buffer), "Loading Map (`%s`)", mapname);
-	q2d_message(PRINT_HIGH, buffer);
+	q2d_message_to_discord2(PRINT_HIGH, va("Loading Map (`%s`)", mapname));
 #endif
 	
 	copyDllInfo();

@@ -59,6 +59,19 @@ char  zbot_testchar2;
 
 qboolean soloadlazy;
 
+char *
+va(char *format, ...)
+{
+	va_list argptr;
+	static char string[1024];
+
+	va_start(argptr, format);
+	vsnprintf(string, 1024, format, argptr);
+	va_end(argptr);
+
+	return string;
+}
+
 void ShutdownGame (void)
 {
 	INITPERFORMANCE(1);
@@ -82,7 +95,7 @@ void ShutdownGame (void)
 		}
 		
 #ifdef USE_DISCORD
-	q2d_message(PRINT_HIGH, "=== Closing Time ===");
+	q2d_message_to_discord2(PRINT_HIGH, "**=== Closing Time ===**");
 #endif
 	
 	// reset the password just in case something has gone wrong...
@@ -90,7 +103,7 @@ void ShutdownGame (void)
 	dllglobals->Shutdown();
 	
 #ifdef USE_DISCORD
-	q2d_exit();
+	q2d_shutdown();
 #endif
 	
 	if (q2adminrunmode)

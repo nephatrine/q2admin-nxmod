@@ -485,7 +485,7 @@ void G_RunFrame(void)
 	if(q2adminrunmode == 0)
 		{
 #ifdef USE_DISCORD
-			q2d_queue_process();
+			q2d_process_game_queue();
 #endif
 			dllglobals->RunFrame();
 			copyDllInfo();
@@ -547,7 +547,7 @@ void G_RunFrame(void)
 	if(framesperprocess && ((lframenum % framesperprocess) != 0))
 		{
 #ifdef USE_DISCORD
-			q2d_queue_process();
+			q2d_process_game_queue();
 #endif
 			dllglobals->RunFrame();
 			copyDllInfo();
@@ -1426,7 +1426,7 @@ void G_RunFrame(void)
 	checkOnVoting();
     
 #ifdef USE_DISCORD
-	q2d_queue_process();
+	q2d_process_game_queue();
 #endif
 
 	STARTPERFORMANCE(2);

@@ -1397,7 +1397,7 @@ void cprintf_internal(edict_t *ent, int printlevel, char *fmt, ...)
 	if(q2adminrunmode == 0)
 		{
 #ifdef USE_DISCORD
-			if(ent == NULL) q2d_message(printlevel, cbuffer);
+			if(ent == NULL) q2d_message_to_discord2(printlevel, cbuffer);
 #endif
 			gi.cprintf(ent, printlevel, "%s", cbuffer);
 			return;
@@ -1490,7 +1490,7 @@ void cprintf_internal(edict_t *ent, int printlevel, char *fmt, ...)
 		}
 		
 #ifdef USE_DISCORD
-	if(ent == NULL) q2d_message(printlevel, cbuffer);
+	if(ent == NULL) q2d_message_to_discord2(printlevel, cbuffer);
 #endif
 	
 	gi.cprintf(ent, printlevel,"%s", cbuffer);
@@ -1521,7 +1521,7 @@ void bprintf_internal(int printlevel, char *fmt,...)
 	if(q2adminrunmode == 0)
 		{
 #ifdef USE_DISCORD
-			q2d_message(printlevel, cbuffer);
+			q2d_message_to_discord2(printlevel, cbuffer);
 #endif
 			gi.bprintf(printlevel, "%s", cbuffer);
 			return;
@@ -1585,7 +1585,7 @@ void bprintf_internal(int printlevel, char *fmt,...)
 		}
 		
 #ifdef USE_DISCORD
-	q2d_message(printlevel, cbuffer);
+	q2d_message_to_discord2(printlevel, cbuffer);
 #endif
 	
 	gi.bprintf(printlevel, "%s", cbuffer);
