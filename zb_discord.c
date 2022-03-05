@@ -146,10 +146,10 @@ static void q2d_message_to_game( char * msg )
 	{
 		if( q2d_bot_state < Q2D_BOT_TRYEXIT )
 		{
-			if( q2d_incoming_end ) q2d_incoming_end->next = newcmd;
 			if( !q2d_incoming_begin ) q2d_incoming_begin = newcmd;
-
+			if( q2d_incoming_end ) q2d_incoming_end->next = newcmd;
 			q2d_incoming_end = newcmd;
+
 			pthread_mutex_unlock( &q2d_incoming_lock );
 			return;
 		}
@@ -162,23 +162,29 @@ static void q2d_message_to_game( char * msg )
 static void q2d_on_bot_ready( struct discord * client )
 {
 	// set discord status
-	char * presence_json = "{"
-	                       "\"activities\":"
-	                       "["
-	                       "{"
-	                       "\"name\": \"Quake II\","
+
+	char * activity_json = "{"
+	                       "\"name\": \"Quake III\","
 	                       "\"type\": 0,"
+	                       "\"url\": \"https://fraglimit.nephatrine.net/\","
 	                       "\"details\": \"blah blah blah\""
-	                       "}"
-	                       "],"
-	                       "\"status\": \"idle\","
-	                       "\"afk\": false"
 	                       "}\0";
-	struct discord_presence_status * presence_info = NULL;
-	discord_presence_status_from_json( presence_json, strlen( presence_json ), presence_info );
-	discord_set_presence( client, presence_info );
+	struct discord_activity activity_info;
+	discord_activity_from_json( activity_json, strlen( activity_json ), &activity_info );
+
+	struct discord_activity * activity_list[2];
+	activity_list[0] = &activity_info;
+	activity_list[1] = NULL;
+
+	struct discord_presence_status presence_info;
+	presence_info.since      = discord_timestamp( client );
+	presence_info.activities = activity_list;
+	presence_info.status     = "idle";
+	presence_info.afk        = false;
+	discord_set_presence( client, &presence_info );
 
 	// open for business
+
 	if( pthread_mutex_lock( &q2d_incoming_lock ) == 0 )
 	{
 		q2d_bot_state = Q2D_BOT_READY;
@@ -186,6 +192,7 @@ static void q2d_on_bot_ready( struct discord * client )
 	}
 	else
 		q2d_bot_state = Q2D_BOT_READY;
+
 	if( pthread_mutex_lock( &q2d_outgoing_lock ) == 0 )
 	{
 		if( q2d_bot.channel )
