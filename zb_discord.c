@@ -159,7 +159,7 @@ static void q2d_message_to_game( char * msg )
 	free( newcmd );
 }
 
-static void q2d_on_bot_ready( struct discord * client, const struct discord_user * bot )
+static void q2d_on_bot_ready( struct discord * client )
 {
 	// set discord status
 	char * presence_json = "{"
@@ -174,9 +174,9 @@ static void q2d_on_bot_ready( struct discord * client, const struct discord_user
 	                       "\"status\": \"idle\","
 	                       "\"afk\": false"
 	                       "}\0";
-	struct discord_gateway_status_update * presence_info = NULL;
-	discord_gateway_status_update_from_json( presence_json, strlen( presence_json ), &presence_info );
-	discord_replace_presence( client, presence_info );
+	struct discord_presence_status * presence_info = NULL;
+	discord_presence_status_from_json( presence_json, strlen( presence_json ), presence_info );
+	discord_set_presence( client, presence_info );
 
 	// open for business
 	if( pthread_mutex_lock( &q2d_incoming_lock ) == 0 )
@@ -198,14 +198,14 @@ static void q2d_on_bot_ready( struct discord * client, const struct discord_user
 		q2d_bot_transmit = Q2D_BOT_READY;
 }
 
-static void q2d_on_command_ping( struct discord * client, const struct discord_user * bot, const struct discord_message * msg )
+static void q2d_on_command_ping( struct discord * client, const struct discord_message * msg )
 {
 	if( msg->author->bot || ( q2d_bot.channel && msg->channel_id != q2d_bot.channel ) ) return;
 	struct discord_create_message_params params = { .content = "**[SERVER]** PONG" };
 	discord_create_message( client, msg->channel_id, &params, NULL );
 }
 
-static void q2d_on_command_rcon( struct discord * client, const struct discord_user * bot, const struct discord_message * msg )
+static void q2d_on_command_rcon( struct discord * client, const struct discord_message * msg )
 {
 	if( msg->author->bot || ( q2d_bot.channel && msg->channel_id != q2d_bot.channel ) ) return;
 
@@ -233,7 +233,7 @@ static void q2d_on_command_rcon( struct discord * client, const struct discord_u
 	}
 }
 
-static void q2d_on_command_say( struct discord * client, const struct discord_user * bot, const struct discord_message * msg )
+static void q2d_on_command_say( struct discord * client, const struct discord_message * msg )
 {
 	if( msg->author->bot || ( q2d_bot.channel && msg->channel_id != q2d_bot.channel ) ) return;
 
@@ -242,7 +242,7 @@ static void q2d_on_command_say( struct discord * client, const struct discord_us
 	q2d_message_to_game( msg_buffer );
 }
 
-static void q2d_process_discord_queue( struct discord * client, const struct discord_user * bot )
+static void q2d_process_discord_queue( struct discord * client )
 {
 	if( !q2d_outgoing_begin ) return;
 
