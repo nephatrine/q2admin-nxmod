@@ -164,7 +164,7 @@ static void q2d_on_bot_ready( struct discord * client )
 	// set discord status
 
 	char * activity_json = "{"
-	                       "\"name\": \"Quake III\","
+	                       "\"name\": \"Quake II\","
 	                       "\"type\": 0,"
 	                       "\"url\": \"https://fraglimit.nephatrine.net/\","
 	                       "\"details\": \"blah blah blah\""
