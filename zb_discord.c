@@ -1,8 +1,8 @@
 #include "zb_discord.h"
 
 #ifdef USE_DISCORD
-#	include <orca/discord.h>
-#	include <orca/discord-internal.h>
+#	include "orca/discord.h"
+#	include <pthread.h>
 #	include <time.h>
 #	include <unistd.h>
 

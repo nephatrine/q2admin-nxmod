@@ -227,7 +227,7 @@ endif
 ifeq ($(Q2A_OSTYPE),Linux)
 ifeq ($(WITH_DISCORD),yes)
 override CFLAGS += -DUSE_DISCORD
-LDLIBS ?= -ldiscord -lcurl -lcrypto -lpthread -lm -ldl -rdynamic
+LDLIBS ?= -lcurl -lpthread -lm -ldl -rdynamic
 else
 LDLIBS ?= -lm -ldl -rdynamic
 endif
@@ -296,11 +296,62 @@ config:
 # Cleanup
 clean:
 	@echo "===> CLEAN"
-	${Q}rm -Rf build release/*
+	make -C external/orca clean
+	${Q}rm -Rf build orca release/*
 
 cleanall:
 	@echo "===> CLEAN"
-	${Q}rm -Rf build release
+	make -C external/orca clean
+	${Q}rm -Rf build orca release
+
+# ----------
+
+ORCA_HDRS = \
+	orca/specs-code/discord/one-specs.h \
+	orca/common.h \
+	orca/debug.h \
+	orca/discord.h \
+	orca/json-actor-boxed.h \
+	orca/log.h \
+	orca/logconf.h \
+	orca/ntl.h
+
+discord: external/orca/lib/libdiscord.a ${ORCA_HDRS}
+
+external/orca/lib/libdiscord.a:
+	make -C external/orca discord
+
+orca/discord.h: external/orca/discord.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/debug.h: external/orca/cee-utils/debug.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/json-actor-boxed.h: external/orca/cee-utils/json-actor-boxed.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/log.h: external/orca/cee-utils/log.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/logconf.h: external/orca/cee-utils/logconf.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/ntl.h: external/orca/cee-utils/ntl.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/common.h: external/orca/common/common.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
+
+orca/specs-code/discord/one-specs.h: external/orca/specs-code/discord/one-specs.h
+	${Q}mkdir -p $(@D)
+	${Q}cp $< $@
 
 # ----------
 
@@ -321,6 +372,15 @@ q2admin:
 	$(MAKE) release/game.so
 
 release/game.so : CFLAGS += -fPIC
+endif
+
+ifeq ($(Q2A_OSTYPE),Linux)
+ifeq ($(WITH_DISCORD),yes)
+build/zb_discord.o: zb_discord.c ${ORCA_HDRS}
+	@echo "===> CC $<"
+	${Q}mkdir -p $(@D)
+	${Q}$(CC) -c $(CFLAGS) -o $@ $<
+endif
 endif
 
 build/%.o: %.c
@@ -360,6 +420,14 @@ Q2A_DEPS = $(Q2A_OBJS:.o=.d)
 
 # Suck header dependencies in
 -include $(Q2A_DEPS)
+
+# ----------
+
+ifeq ($(Q2A_OSTYPE),Linux)
+ifeq ($(WITH_DISCORD),yes)
+Q2A_OBJS += external/orca/lib/libdiscord.a
+endif
+endif
 
 # ----------
 
