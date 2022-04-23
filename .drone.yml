@@ -15,6 +15,7 @@ steps:
   image: nephatrine/nxbuilder:alpine
   commands:
   - sudo apk add curl-dev
+  - sudo chown -R packager .
   - make
   - tar -C release -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
   depends_on:
@@ -60,6 +61,6 @@ trigger:
 
 ---
 kind: signature
-hmac: d0e0eefb72c34e8912d034fbbf2806ca723ce835a21c3cde247cecd14d9e6fd2
+hmac: dd4b6f22363045e961c97cf0705eba15aa9a68e5e0d14b09cc3eb84265079da5
 
 ...
