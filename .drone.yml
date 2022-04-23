@@ -1,0 +1,60 @@
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-alpine
+  image: nephatrine/nxbuilder:alpine
+  commands:
+  - git submodule update --init --recursive
+  - sudo apk add curl-dev
+  - make
+  - tar -C release -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
+- name: publish
+  image: plugins/gitea-release
+  settings:
+    api_key:
+      from_secret: gitea-api
+    base_url: https://code.nephatrine.net
+    files: q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+  depends_on:
+  - build-alpine
+  when:
+    event:
+    - promote
+    - tag
+
+---
+kind: pipeline
+name: notify
+
+steps:
+- name: notify-status
+  image: appleboy/drone-discord
+  failure: ignore
+  settings:
+    avatar_url: https://nephatrine.net/images/buttons/drone-ci.png
+    message: "Build of **[{{repo.name}}:{{commit.branch}}](<https://code.nephatrine.net/nephatrine/{{repo.name}}/src/branch/{{commit.branch}}>)** returned [{{build.status}}](<{{build.link}}>)."
+    username: DroneCI
+    webhook_id:
+      from_secret: wh-quake2-id
+    webhook_token:
+      from_secret: wh-quake2-tok
+
+depends_on:
+- default
+
+trigger:
+  status:
+  - success
+  - failure
+
+---
+kind: signature
+hmac: d4ed72b9ca9fcb55bcc385a25c9628db6a8257a001b0dc0812d4a4c026eff346
+
+...
