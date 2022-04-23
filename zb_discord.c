@@ -2,7 +2,10 @@
 
 #ifdef USE_DISCORD
 #	include "orca/discord.h"
+
 #	include <pthread.h>
+#	include <stdlib.h>
+#	include <string.h>
 #	include <time.h>
 #	include <unistd.h>
 
@@ -482,6 +485,7 @@ void q2d_shutdown()
 	queue_set_state( q2d_incoming_queue, Q2D_STATE_CLOSED );
 	queue_set_state_if( q2d_outgoing_queue, Q2D_STATE_CLOSING, ~Q2D_STATE_CLOSED );
 
+#ifdef _GNU_SOURCE
 	struct timespec ts;
 	if( clock_gettime( CLOCK_REALTIME, &ts ) != -1 )
 	{
@@ -489,6 +493,7 @@ void q2d_shutdown()
 		pthread_timedjoin_np( q2d_bot_thread, NULL, &ts );
 	}
 	else
+#endif
 		pthread_join( q2d_bot_thread, NULL );
 
 	queue_destroy( q2d_incoming_queue );
