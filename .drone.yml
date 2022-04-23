@@ -7,13 +7,18 @@ platform:
   arch: amd64
 
 steps:
+- name: submodules
+  image: alpine/git
+  commands:
+  - git submodule update --init --recursive
 - name: build-alpine
   image: nephatrine/nxbuilder:alpine
   commands:
-  - git submodule update --init --recursive
   - sudo apk add curl-dev
   - make
   - tar -C release -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
+  depends_on:
+  - submodules
 - name: publish
   image: plugins/gitea-release
   settings:
@@ -55,6 +60,6 @@ trigger:
 
 ---
 kind: signature
-hmac: d4ed72b9ca9fcb55bcc385a25c9628db6a8257a001b0dc0812d4a4c026eff346
+hmac: d0e0eefb72c34e8912d034fbbf2806ca723ce835a21c3cde247cecd14d9e6fd2
 
 ...
