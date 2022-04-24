@@ -22,15 +22,14 @@ steps:
   depends_on:
   - submodules
 - name: publish-web
-  image: vividboarder/drone-webdav
-  settings:
-    destination: https://files.nephatrine.net/archives/
-    username:
-      from_secret: webdav-user
-    password:
-      from_secret: webdav-pass
+  image: alpine/curl
   environment:
-    PLUGIN_FILE: q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz
+    WEBDAV_USERNAME:
+      from_secret: webdav-user
+    WEBDAV_PASSWORD:
+      from_secret: webdav-pass
+  commands:
+  - curl -T 'q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
   depends_on:
   - build-alpine
   when:
@@ -79,6 +78,6 @@ trigger:
 
 ---
 kind: signature
-hmac: b5cbe1e89ea8f3f481419bd35179c548b6fcea050ffbbf3cc090af6f06cb48c3
+hmac: 6c3fae73d432d42428c10a73effd390185d2ad3d4ae17dafd2d97970c0da36d9
 
 ...
