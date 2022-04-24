@@ -15,8 +15,7 @@ steps:
 - name: build-alpine
   image: nephatrine/nxbuilder:alpine
   commands:
-  - sudo apk update
-  - sudo apk add curl-dev
+  - sudo apk --update add curl-dev
   - make
   - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz -C release game.so
   - tar -czvf q2admin-nxmod_noarch.tar.gz q2*.txt q2*.json
@@ -27,7 +26,7 @@ steps:
   image: nephatrine/nxbuilder:ubuntu
   commands:
   - sudo apt-get update
-  - sudo apt-get install libcurl4-openssl-dev
+  - sudo apt-get install -y libcurl4-openssl-dev
   - CFLAGS="-D_GNU_SOURCE" make
   - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz -C release game.so
   - make clean
@@ -36,7 +35,7 @@ steps:
 - name: build-redhat
   image: nephatrine/nxbuilder:almalinux
   commands:
-  - sudo dnf install libcurl-devel
+  - sudo dnf -y install libcurl-devel
   - CFLAGS="-D_GNU_SOURCE -m64" LDFLAGS="-m64" make
   - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz -C release game.so
   - make clean
@@ -101,6 +100,6 @@ trigger:
 
 ---
 kind: signature
-hmac: c4095699cd5e825a0dd286b6186db55b6c01dc5b267377c89feb9385486f3cfa
+hmac: 23fddf073a44c56aeee1589e9174551b95cc52f650bd95df022441d042675615
 
 ...
