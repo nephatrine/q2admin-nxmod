@@ -25,7 +25,7 @@ steps:
   settings:
     file: q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
     destination: https://files.nephatrine.net/archives/
-    user:
+    username:
       from_secret: webdav-user
     password:
       from_secret: webdav-pass
@@ -75,6 +75,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 4b7a772d933623360deebba2e978ed0d1321cf589f63959a111ed4a193eacb31
+hmac: a226ff9309caebdce604b1e566a9c6669dc5f8f83e7f7a01b3ae7d462b16b96b
 
 ...
