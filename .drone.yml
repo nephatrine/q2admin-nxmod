@@ -24,12 +24,13 @@ steps:
 - name: publish-web
   image: vividboarder/drone-webdav
   settings:
-    file: q2admin-nxmod_*.tar.gz
     destination: https://files.nephatrine.net/archives/
     username:
       from_secret: webdav-user
     password:
       from_secret: webdav-pass
+  environment:
+    PLUGIN_FILE: q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz
   depends_on:
   - build-alpine
   when:
@@ -78,6 +79,6 @@ trigger:
 
 ---
 kind: signature
-hmac: f9f435e91c12cac1135ff824f35deb6e2421f3646f3647edc15fb34f5f833e1a
+hmac: b5cbe1e89ea8f3f481419bd35179c548b6fcea050ffbbf3cc090af6f06cb48c3
 
 ...
