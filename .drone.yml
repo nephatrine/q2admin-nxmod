@@ -15,12 +15,33 @@ steps:
 - name: build-alpine
   image: nephatrine/nxbuilder:alpine
   commands:
+  - sudo apk update
   - sudo apk add curl-dev
   - make
   - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz -C release game.so
   - tar -czvf q2admin-nxmod_noarch.tar.gz q2*.txt q2*.json
+  - make clean
   depends_on:
   - submodules
+- name: build-ubuntu
+  image: nephatrine/nxbuilder:ubuntu
+  commands:
+  - sudo apt-get update
+  - sudo apt-get install libcurl4-openssl-dev
+  - CFLAGS="-D_GNU_SOURCE" make
+  - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz -C release game.so
+  - make clean
+  depends_on:
+  - build-alpine
+- name: build-redhat
+  image: nephatrine/nxbuilder:almalinux
+  commands:
+  - sudo dnf install libcurl-devel
+  - CFLAGS="-D_GNU_SOURCE -m64" LDFLAGS="-m64" make
+  - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz -C release game.so
+  - make clean
+  depends_on:
+  - build-ubuntu
 - name: publish-web
   image: alpine/curl
   environment:
@@ -29,9 +50,9 @@ steps:
     WEBDAV_PASSWORD:
       from_secret: webdav-pass
   commands:
-  - curl -T 'q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
+  - curl -T 'q2admin-nxmod_{x86_64-alpine-linux-musl,x86_64-redhat-linux-gnu,x86_64-ubuntu-linux-gnu,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
   depends_on:
-  - build-alpine
+  - build-redhat
   when:
     event:
       exclude:
@@ -44,9 +65,11 @@ steps:
     base_url: https://code.nephatrine.net
     files:
     - q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    - q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
+    - q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
     - q2admin-nxmod_noarch.tar.gz
   depends_on:
-  - build-alpine
+  - build-redhat
   when:
     event:
     - tag
@@ -78,6 +101,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 6c3fae73d432d42428c10a73effd390185d2ad3d4ae17dafd2d97970c0da36d9
+hmac: c4095699cd5e825a0dd286b6186db55b6c01dc5b267377c89feb9385486f3cfa
 
 ...
