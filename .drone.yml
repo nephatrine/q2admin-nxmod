@@ -17,13 +17,14 @@ steps:
   commands:
   - sudo apk add curl-dev
   - make
-  - tar -C release -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
+  - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz -C release game.so
+  - tar -czvf q2admin-nxmod_noarch.tar.gz q2*.txt q2*.json
   depends_on:
   - submodules
 - name: publish-web
   image: vividboarder/drone-webdav
   settings:
-    file: q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    file: q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz
     destination: https://files.nephatrine.net/archives/
     username:
       from_secret: webdav-user
@@ -41,7 +42,9 @@ steps:
     api_key:
       from_secret: gitea-api
     base_url: https://code.nephatrine.net
-    files: q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    files:
+    - q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    - q2admin-nxmod_noarch.tar.gz
   depends_on:
   - build-alpine
   when:
@@ -75,6 +78,6 @@ trigger:
 
 ---
 kind: signature
-hmac: a226ff9309caebdce604b1e566a9c6669dc5f8f83e7f7a01b3ae7d462b16b96b
+hmac: 7b0b7a5755e7b407ac9d0504d8cb472a4d54cc52df7343d184a6d19950ac81a6
 
 ...
