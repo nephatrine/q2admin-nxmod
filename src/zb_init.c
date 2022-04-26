@@ -66,7 +66,7 @@ game_export_t  *dllglobals;
 
 cvar_t  *rcon_password, *gamedir, *maxclients, *logfile, *rconpassword, *port, *q2admintxt, *q2adminbantxt;	// UPDATE
 
-qboolean quake2dirsupport = TRUE;
+qboolean quake2dirsupport = FALSE;
 
 char dllname[512];
 char gmapname[MAX_QPATH];
@@ -164,7 +164,7 @@ int randomwaitreporttime = 55;
 
 int maxMsgLevel = 3;
 
-char *zbotversion = "==== Q2Admin Version " Q2ADMINVERSION " ====\n";
+char *zbotversion = "==== Q2Admin Version " Q2ADMIN_VERSION_FULL " ====\n";
 qboolean serverinfoenable = TRUE;
 
 char zbotmotd[256];

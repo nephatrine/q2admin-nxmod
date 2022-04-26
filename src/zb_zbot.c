@@ -500,7 +500,7 @@ void G_RunFrame(void)
 	if(serverinfoenable && (lframenum > 10))
 		{
 			//    sprintf(buffer, "logfile 2;set Bot \"No Bots\" s\n");
-			sprintf(buffer, "set Q2Admin \"" Q2ADMINVERSION "\" s\n");
+			sprintf(buffer, "set Q2Admin \"" Q2ADMIN_VERSION_STRING "\" s\n");
 			gi.AddCommandString(buffer);
 			serverinfoenable = 0;
 		}

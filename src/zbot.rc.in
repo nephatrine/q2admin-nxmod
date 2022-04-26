@@ -1,0 +1,69 @@
+﻿/*-------------------------------
+# SPDX-License-Identifier: ISC
+#
+# Copyright © 2022 Daniel Wolf <<nephatrine@gmail.com>>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+# -----------------------------*/
+
+#include "g_version.h"
+
+// for constants
+#include <winver.h>
+#include <ntdef.h>
+
+#ifdef RC_INVOKED
+
+#ifdef NDEBUG
+#	define FLAG_DEBUG 0
+#else
+#	define FLAG_DEBUG VS_FF_DEBUG
+#endif
+
+#if defined( Q2ADMIN_GIT_DIRTY ) && Q2ADMIN_GIT_DIRTY
+#	define FLAG_PATCHED VS_FF_PATCHED
+#else
+#	define FLAG_PATCHED 0
+#endif
+
+VS_VERSION_INFO	VERSIONINFO
+FILEVERSION		Q2ADMIN_VERSION_MAJOR,Q2ADMIN_VERSION_MINOR,Q2ADMIN_VERSION_PATCH,0
+PRODUCTVERSION	Q2ADMIN_VERSION_MAJOR,Q2ADMIN_VERSION_MINOR,Q2ADMIN_VERSION_PATCH,0
+FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
+FILEFLAGS		(FLAG_DEBUG | FLAG_PATCHED)
+FILEOS			VOS_NT
+FILETYPE		VFT_DLL
+FILESUBTYPE		VFT2_UNKNOWN
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4"
+        BEGIN
+		VALUE "Comments",			"Game Proxy Module"
+		VALUE "CompanyName",		"@_Q2ADMIN_PROJECT_VENDOR@"
+		VALUE "FileDescription",	"@PROJECT_DESCRIPTION@"
+		VALUE "FileVersion",		Q2ADMIN_VERSION_FULL
+		VALUE "InternalName",		"@PROJECT_NAME@"
+		VALUE "LegalCopyright",		"(C) @_CURRENT_YEAR@ @_Q2ADMIN_PROJECT_MAINTAINER@"
+		VALUE "OriginalFilename",	"@Q2ADMIN_NAME@.dll"
+		VALUE "ProductName",		"@NX_PROJECT_PARENT@"
+		VALUE "ProductVersion",		Q2ADMIN_VERSION_FULL
+        END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409,1252
+	END
+END
+
+#endif

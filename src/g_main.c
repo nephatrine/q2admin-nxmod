@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
 #include "g_local.h"
+#include "g_export.h"
 
 #if defined(WIN32)
 #include <windows.h>
@@ -37,11 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #if defined(WIN32)
 HINSTANCE hdll;
-#define DLLNAME       "game.real.dll"
-#define DLLNAMEMODDIR "game.real.dll"
 #elif defined(__GNUC__)
 void *hdll = NULL;
-#define DLLNAME       "game.real.so"
 #endif
 
 typedef game_export_t  *GAMEAPI (game_import_t *import);
@@ -134,7 +132,7 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
-Q2_DLL_EXPORTED game_export_t *GetGameAPI(game_import_t *import)
+Q2ADMIN_EXPORT game_export_t *GetGameAPI(game_import_t *import)
 {
 	GAMEAPI *getapi;
 #ifdef __GNUC__
@@ -236,27 +234,28 @@ Q2_DLL_EXPORTED game_export_t *GetGameAPI(game_import_t *import)
 	zbot_testchar1 = '0' + (int)(9.9 * random());
 	zbot_testchar2 = '0' + (int)(9.9 * random());
 	
-#if defined(WIN32)
-	if (quake2dirsupport)
-		{
-			sprintf(dllname, "%s/%s", moddir, DLLNAME);
-		}
-	else
-		{
-			sprintf(dllname, "%s/%s", moddir, DLLNAMEMODDIR);
-		}
+	if (quake2dirsupport) sprintf(dllname, "%s/%s%s", moddir, GAMENAME, GAMEEXT);
+	else sprintf(dllname, "%s/%s.real%s", moddir, GAMENAME, GAMEEXT);
 	
+#if defined(WIN32)
 	hdll = LoadLibrary(dllname);
 #elif defined(__GNUC__)
 	loadtype = soloadlazy ? RTLD_LAZY : RTLD_NOW;
-	sprintf(dllname, "%s/%s", moddir, DLLNAME);
 	hdll = dlopen(dllname, loadtype);
 #endif
 	
 	if (hdll == NULL)
 		{
+#if defined(WIN32)
+			unsigned long stat = GetLastError();
+			gi.dprintf("Unable to load %s, error %u. Trying default game.\n", dllname, stat);
+#else
+			gi.dprintf("Unable to load %s. Trying default game.\n", dllname);
+#endif
+
 			// try the baseq2 directory...
-			sprintf(dllname, "baseq2/%s", DLLNAME);
+			if (quake2dirsupport) sprintf(dllname, "baseq2/%s%s", GAMENAME, GAMEEXT);
+			else sprintf(dllname, "baseq2/%s.real%s", GAMENAME, GAMEEXT);
 			
 #if defined(WIN32)
 			hdll = LoadLibrary(dllname);
@@ -264,34 +263,17 @@ Q2_DLL_EXPORTED game_export_t *GetGameAPI(game_import_t *import)
 			hdll = dlopen(dllname, loadtype);
 #endif
 			
-#if defined(WIN32)
-			if (quake2dirsupport)
-				{
-					sprintf(dllname, "%s/%s", moddir, DLLNAME);
-				}
-			else
-				{
-					sprintf(dllname, "%s/%s", moddir, DLLNAMEMODDIR);
-				}
-#elif defined(__GNUC__)
-			sprintf(dllname, "%s/%s", moddir, DLLNAME);
-#endif
-			
 			if (hdll == NULL)
 				{
 #if defined(WIN32)
-				unsigned long stat = GetLastError();
-				gi.dprintf("Unable to load DLL %s, error %u.\n", dllname, stat);
+				stat = GetLastError();
+				gi.dprintf("Unable to load %s, error %u.\n", dllname, stat);
 					return &globals;
 #else
-				gi.dprintf("Unable to load DLL %s.\n", dllname);
+				gi.dprintf("Unable to load %s.\n", dllname);
 					return &globals;
 #endif
 			}
-			else
-				{
-					gi.dprintf ("Unable to load DLL %s, loading baseq2 DLL.\n", dllname);
-				}
 		}
 		
 #if defined(WIN32)

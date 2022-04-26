@@ -96,10 +96,8 @@ typedef enum{false, true} qboolean;
 
 #ifdef _WIN32
  #define MAX_OSPATH 256
- #define Q2_DLL_EXPORTED  __declspec(dllexport)
 #else // not Win32 (Linux, BSD, Mac, ..)
  #define MAX_OSPATH 4096
- #define Q2_DLL_EXPORTED  __attribute__((__visibility__("default")))
 #endif
 
 //

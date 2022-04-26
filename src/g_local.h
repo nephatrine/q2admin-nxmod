@@ -42,11 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <ctype.h>
 
-/* Use our local regex.c and .h on Windows but
-   Posix library regex on *nix systems.
-   This makes it 64-bit clean on GNU Linux */
-/* Added __GNUC__ condition for MinGW64 to use its own regex lib. //QW// */
-#if defined _WIN32 && !defined __GNUC__
+#ifdef _MSC_VER
 #include "regex.h"
 #else
 #include <regex.h>
@@ -1309,8 +1305,8 @@ typedef struct
 	int   level;
 } admin_type;
 
-#define Q2ADMINVERSION   "1.17.48-nxmod-1"
-#define DEFAULTQ2AVER   "1.0"
+#include "g_version.h"
+
 #define DEFAULTQ2AMSG   "\nThis server requires %s anti cheat client.\n"
 #define MAX_ADMINS    128
 #define ADMIN_AUTH_LEVEL  1

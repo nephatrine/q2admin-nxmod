@@ -1,3 +1,0 @@
-[submodule "external/orca"]
-	path = external/orca
-	url = https://github.com/cee-studio/orca.git

@@ -7,40 +7,42 @@ platform:
   arch: amd64
 
 steps:
-- name: submodules
-  image: nephatrine/nxbuilder:alpine
-  commands:
-  - sudo chown -R packager .
-  - git submodule update --init --recursive
 - name: build-alpine
   image: nephatrine/nxbuilder:alpine
   commands:
   - sudo apk --update add curl-dev
-  - make
-  - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz -C release game.so
-  - tar -czvf q2admin-nxmod_noarch.tar.gz q2*.txt q2*.json
-  - make clean
-  depends_on:
-  - submodules
+  - sudo mkdir build-alpine
+  - sudo chown -R packager build-alpine
+  - cd build-alpine
+  - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-alpine-linux-musl" -DQ2ADMIN_NAME="game" ..
+  - ninja orca
+  - ninja
+  - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
+  - cd ../data
+  - tar -czvf ../build-alpine/q2admin-nxmod_noarch.tar.gz *.txt *.json
 - name: build-ubuntu
   image: nephatrine/nxbuilder:ubuntu
   commands:
   - sudo apt-get update
   - sudo apt-get install -y libcurl4-openssl-dev
-  - CFLAGS="-D_GNU_SOURCE" make
-  - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz -C release game.so
-  - make clean
-  depends_on:
-  - build-alpine
+  - sudo mkdir build-ubuntu
+  - sudo chown -R packager build-ubuntu
+  - cd build-ubuntu
+  - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-ubuntu-linux-gnu" -DQ2ADMIN_NAME="game" ..
+  - ninja orca
+  - ninja
+  - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz game.so
 - name: build-redhat
   image: nephatrine/nxbuilder:almalinux
   commands:
   - sudo dnf -y install libcurl-devel
-  - CFLAGS="-D_GNU_SOURCE -m64" LDFLAGS="-m64" make
-  - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz -C release game.so
-  - make clean
-  depends_on:
-  - build-ubuntu
+  - sudo mkdir build-redhat
+  - sudo chown -R packager build-redhat
+  - cd build-redhat
+  - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-redhat-linux-gnu" -DQ2ADMIN_NAME="game" ..
+  - ninja orca
+  - ninja
+  - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz game.so
 - name: publish-web
   image: alpine/curl
   environment:
@@ -49,10 +51,16 @@ steps:
     WEBDAV_PASSWORD:
       from_secret: webdav-pass
   commands:
-  - curl -T 'q2admin-nxmod_{x86_64-alpine-linux-musl,x86_64-redhat-linux-gnu,x86_64-ubuntu-linux-gnu,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
+  - curl -T 'build-alpine/q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
+  - curl -T 'build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
+  - curl -T 'build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
   depends_on:
+  - build-alpine
   - build-redhat
+  - build-ubuntu
   when:
+    branch:
+    - master
     event:
       exclude:
       - pull_request
@@ -63,12 +71,14 @@ steps:
       from_secret: gitea-api
     base_url: https://code.nephatrine.net
     files:
-    - q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
-    - q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
-    - q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
-    - q2admin-nxmod_noarch.tar.gz
+    - build-alpine/q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    - build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
+    - build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
+    - build-alpine/q2admin-nxmod_noarch.tar.gz
   depends_on:
+  - build-alpine
   - build-redhat
+  - build-ubuntu
   when:
     event:
     - tag
@@ -100,6 +110,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 23fddf073a44c56aeee1589e9174551b95cc52f650bd95df022441d042675615
+hmac: 7c1ddf40e6d7e5ee8578c877f1ab78930b4bd4cfdc06f9c67d5ea4faedaeceee
 
 ...

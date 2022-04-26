@@ -25,7 +25,7 @@ zbotdetect  "No"
 ; like the linux / solaris versions. For win32 the old mod dll must be called 
 ; 'gamex86.real.dll' for this to work.
 ;
-;quake2dirsupport "Yes"
+;quake2dirsupport "No"
 
 ;
 ; MOTD file to display at client connect (and also happens on level changed as well) 

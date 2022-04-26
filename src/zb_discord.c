@@ -1,22 +1,38 @@
+/*-------------------------------
+# SPDX-License-Identifier: ISC
+#
+# Copyright © 2022 Daniel Wolf <<nephatrine@gmail.com>>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+# -----------------------------*/
+
 #include "zb_discord.h"
 
-#ifdef USE_DISCORD
-#	include "orca/discord.h"
-
-#	include <pthread.h>
-#	include <stdlib.h>
-#	include <string.h>
-#	include <time.h>
-#	include <unistd.h>
+#include <orca/discord.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 //
 // Thread Queue
 //
 
-#	define Q2D_STATE_UNINITIALIZED 1
-#	define Q2D_STATE_CLOSED 2
-#	define Q2D_STATE_CLOSING 4
-#	define Q2D_STATE_READY 8
+#define Q2D_STATE_UNINITIALIZED 1
+#define Q2D_STATE_CLOSED 2
+#define Q2D_STATE_CLOSING 4
+#define Q2D_STATE_READY 8
 
 typedef struct queue_cmd_s
 {
@@ -219,12 +235,12 @@ static void q2d_message_to_game( char * msg )
 static void q2d_on_bot_ready( struct discord * client )
 {
 	// set discord status
-	char * activity_json = "{"
-	                       "\"name\": \"Quake II\","
-	                       "\"type\": 0,"
-	                       "\"url\": \"https://fraglimit.nephatrine.net/\","
-	                       "\"details\": \"blah blah blah\""
-	                       "}\0";
+	char *                  activity_json = "{"
+	                                        "\"name\": \"Quake II\","
+	                                        "\"type\": 0,"
+	                                        "\"url\": \"https://fraglimit.nephatrine.net/\","
+	                                        "\"details\": \"blah blah blah\""
+	                                        "}\0";
 	struct discord_activity activity_info;
 	discord_activity_from_json( activity_json, strlen( activity_json ), &activity_info );
 
@@ -364,13 +380,13 @@ static void * q2d_main( void * arg )
 // These *can* reference game code.
 // =================================
 
-#	ifdef true
-#		undef true
-#	endif
-#	ifdef false
-#		undef false
-#	endif
-#	include "g_local.h"
+#ifdef true
+#	undef true
+#endif
+#ifdef false
+#	undef false
+#endif
+#include "g_local.h"
 
 void q2d_initialize()
 {
@@ -443,10 +459,7 @@ void q2d_message_to_discord2( int level, const char * s )
 				snprintf( q2d_buffer, ( cptr - s ) + 4, "**%s", s );
 				snprintf( q2d_buffer + ( cptr - s ) + 3, sizeof( q2d_buffer ) - ( cptr - s ) - 3, "**%s", cptr + 1 );
 			}
-			else
-			{
-				snprintf( q2d_buffer, sizeof( q2d_buffer ), "*%s*", s );
-			}
+			else { snprintf( q2d_buffer, sizeof( q2d_buffer ), "*%s*", s ); }
 			break;
 		default: return;
 	}
@@ -499,5 +512,3 @@ void q2d_shutdown()
 	queue_destroy( q2d_incoming_queue );
 	queue_destroy( q2d_outgoing_queue );
 }
-
-#endif
