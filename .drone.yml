@@ -65,16 +65,19 @@ steps:
       exclude:
       - pull_request
 - name: publish-gitea
-  image: plugins/gitea-release
-  settings:
-    api_key:
+  image: alpine/curl
+  environment:
+    GITEA_BASE: "https://code.nephatrine.net/api/v1"
+    GITEA_TOKEN:
       from_secret: gitea-api
-    base_url: https://code.nephatrine.net
-    files:
-    - build-alpine/q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
-    - build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
-    - build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
-    - build-alpine/q2admin-nxmod_noarch.tar.gz
+  commands:
+    - apk add --update bash grep jq
+    - curl -o publish.sh https://gist.githubusercontent.com/nephatrine/fb6971bab1190a2c60992c5d97f36af8/raw/af3cffb23dc4a1858eb7cec7f06a0f4b432aca54/gitea-attacher.sh
+    - chmod +x publish.sh
+    - ./publish.sh build-alpine/q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
+    - ./publish.sh build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
+    - ./publish.sh build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
+    - ./publish.sh build-alpine/q2admin-nxmod_noarch.tar.gz
   depends_on:
   - build-alpine
   - build-redhat
@@ -110,6 +113,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 7c1ddf40e6d7e5ee8578c877f1ab78930b4bd4cfdc06f9c67d5ea4faedaeceee
+hmac: 02e227aca2502b57e05af31eb70a0ae8990ea9b55eed19b609cca17f9591ffed
 
 ...
