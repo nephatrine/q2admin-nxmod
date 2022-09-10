@@ -44,16 +44,15 @@ steps:
   - ninja
   - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz game.so
 - name: publish-web
-  image: alpine/curl
+  image: nephatrine/nxbuilder:alpine
   environment:
+    WEBDAV_BASEURL: "files.nephatrine.net"
     WEBDAV_USERNAME:
       from_secret: webdav-user
     WEBDAV_PASSWORD:
       from_secret: webdav-pass
   commands:
-  - curl -T 'build-alpine/q2admin-nxmod_{x86_64-alpine-linux-musl,noarch}.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
-  - curl -T 'build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
-  - curl -T 'build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz' --user "$WEBDAV_USERNAME:$WEBDAV_PASSWORD" 'https://files.nephatrine.net/archives/'
+  - webdav-publish archives build-alpine/*.tar.gz build-redhat/*.tar.gz build-ubuntu/*.tar.gz
   depends_on:
   - build-alpine
   - build-redhat
@@ -65,19 +64,13 @@ steps:
       exclude:
       - pull_request
 - name: publish-gitea
-  image: alpine/curl
+  image: nephatrine/nxbuilder:alpine
   environment:
     GITEA_BASE: "https://code.nephatrine.net/api/v1"
     GITEA_TOKEN:
       from_secret: gitea-api
   commands:
-    - apk add --update bash grep jq
-    - curl -o publish.sh https://gist.githubusercontent.com/nephatrine/fb6971bab1190a2c60992c5d97f36af8/raw/af3cffb23dc4a1858eb7cec7f06a0f4b432aca54/gitea-attacher.sh
-    - chmod +x publish.sh
-    - ./publish.sh build-alpine/q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz
-    - ./publish.sh build-redhat/q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz
-    - ./publish.sh build-ubuntu/q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz
-    - ./publish.sh build-alpine/q2admin-nxmod_noarch.tar.gz
+  - gitea-publish build-alpine/*.tar.gz build-redhat/*.tar.gz build-ubuntu/*.tar.gz
   depends_on:
   - build-alpine
   - build-redhat
