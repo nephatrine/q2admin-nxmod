@@ -20,7 +20,7 @@ steps:
   - cd ../data
   - tar -czvf ../build-alpine/q2admin-nxmod_noarch.tar.gz *.txt *.json
 - name: build-ubuntu
-  image: nephatrine/nxbuilder:ubuntu
+  image: nephatrine/nxbuilder:ubuntu-multilib
   commands:
   - apt-get update
   - apt-get install -y libcurl4-openssl-dev
@@ -103,6 +103,6 @@ trigger:
 
 ---
 kind: signature
-hmac: ee0e2ae45e5f36b1d09c48dda22a6c30a2a56835d07ca208f670868d49805895
+hmac: 70f8d9dc800acfeaf3ca646bbe63dad5820da17983b6e439c7daaa96e094aa72
 
 ...
