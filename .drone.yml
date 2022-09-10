@@ -10,11 +10,9 @@ steps:
 - name: build-alpine
   image: nephatrine/nxbuilder:alpine
   commands:
-  - apk --update add curl-dev
   - mkdir build-alpine
   - cd build-alpine
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-alpine-linux-musl" -DQ2ADMIN_NAME="game" ..
-  - ninja orca
   - ninja
   - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
   - cd ../data
@@ -22,22 +20,17 @@ steps:
 - name: build-ubuntu
   image: nephatrine/nxbuilder:ubuntu-multilib
   commands:
-  - apt-get update
-  - apt-get install -y libcurl4-openssl-dev
   - mkdir build-ubuntu
   - cd build-ubuntu
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-ubuntu-linux-gnu" -DQ2ADMIN_NAME="game" ..
-  - ninja orca
   - ninja
   - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz game.so
 - name: build-redhat
   image: nephatrine/nxbuilder:almalinux
   commands:
-  - dnf -y install libcurl-devel
   - mkdir build-redhat
   - cd build-redhat
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-redhat-linux-gnu" -DQ2ADMIN_NAME="game" ..
-  - ninja orca
   - ninja
   - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz game.so
 - name: publish-web
@@ -103,6 +96,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 70f8d9dc800acfeaf3ca646bbe63dad5820da17983b6e439c7daaa96e094aa72
+hmac: c4af2054fc0b8db4c0e18cc6772963f1eb50c0212b4f0cc87884a175d70c202b
 
 ...
