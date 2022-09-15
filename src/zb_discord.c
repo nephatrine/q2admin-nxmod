@@ -16,6 +16,8 @@
 # PERFORMANCE OF THIS SOFTWARE.
 # -----------------------------*/
 
+#define _GNU_SOURCE
+
 #include "zb_discord.h"
 
 #include <orca/discord.h>
@@ -50,11 +52,11 @@ typedef struct
 
 static queue_head_t * queue_construct()
 {
-	queue_head_t * queue = malloc( sizeof( queue_head_t ) );
+	queue_head_t * queue = (queue_head_t *)malloc( sizeof( queue_head_t ) );
 	queue->head = queue->tail = NULL;
 	queue->state              = Q2D_STATE_UNINITIALIZED;
 
-	queue->guard = malloc( sizeof( pthread_mutex_t ) );
+	queue->guard = (pthread_mutex_t *)malloc( sizeof( pthread_mutex_t ) );
 	pthread_mutex_init( queue->guard, NULL );
 
 	return queue;
@@ -64,16 +66,21 @@ static void queue_destroy( queue_head_t * queue )
 {
 	queue_cmd_t * element;
 
-	while( queue->head != NULL )
+	if( pthread_mutex_lock( queue->guard ) == 0 )
 	{
-		element     = queue->head;
-		queue->head = element->next;
-		free( element );
+		while( queue->head != NULL )
+		{
+			element     = queue->head;
+			queue->head = element->next;
+			free( element );
+		}
+
+		pthread_mutex_unlock( queue->guard );
+		pthread_mutex_destroy( queue->guard );
+		free( queue->guard );
+		free( queue );
 	}
 
-	pthread_mutex_destroy( queue->guard );
-	free( queue->guard );
-	free( queue );
 	queue = NULL;
 }
 
@@ -82,7 +89,7 @@ static void queue_push( queue_head_t * queue, const char * message )
 	if( message == NULL ) return;
 
 	size_t        length   = strlen( message ) + 1;
-	queue_cmd_t * element  = malloc( sizeof( queue_cmd_t ) + length );
+	queue_cmd_t * element  = (queue_cmd_t *)malloc( sizeof( queue_cmd_t ) + length );
 	queue_cmd_t * previous = NULL;
 
 	snprintf( element->msg, length, "%s", message );
@@ -168,8 +175,78 @@ static int queue_get_state( queue_head_t * queue )
 	return state;
 }
 
+#ifndef USE_DISCORD_OUTGOING
+typedef struct
+{
+	pthread_mutex_t * guard;
+	int               state;
+} queue_state_t;
+
+static queue_state_t * state_construct()
+{
+	queue_state_t * queue = (queue_state_t *)malloc( sizeof( queue_state_t ) );
+	queue->state          = Q2D_STATE_UNINITIALIZED;
+
+	queue->guard = (pthread_mutex_t *)malloc( sizeof( pthread_mutex_t ) );
+	pthread_mutex_init( queue->guard, NULL );
+
+	return queue;
+}
+
+static void state_destroy( queue_state_t * queue )
+{
+	if( pthread_mutex_lock( queue->guard ) == 0 )
+	{
+		pthread_mutex_unlock( queue->guard );
+		pthread_mutex_destroy( queue->guard );
+		free( queue->guard );
+		free( queue );
+	}
+	queue = NULL;
+}
+
+static void state_set_state( queue_state_t * queue, int state )
+{
+	if( pthread_mutex_lock( queue->guard ) == 0 )
+	{
+		queue->state = state;
+		pthread_mutex_unlock( queue->guard );
+	}
+	else
+		queue->state = state;
+}
+
+static void state_set_state_if( queue_state_t * queue, int new_state, const int old_state )
+{
+	if( pthread_mutex_lock( queue->guard ) == 0 )
+	{
+		if( queue->state & old_state ) queue->state = new_state;
+		pthread_mutex_unlock( queue->guard );
+	}
+	else if( queue->state | old_state )
+		queue->state = new_state;
+}
+
+static int state_get_state( queue_state_t * queue )
+{
+	int state = queue->state;
+
+	if( pthread_mutex_lock( queue->guard ) == 0 )
+	{
+		state = queue->state;
+		pthread_mutex_unlock( queue->guard );
+	}
+
+	return state;
+}
+#endif
+
 static queue_head_t * q2d_incoming_queue = NULL;
+#ifdef USE_DISCORD_OUTGOING
 static queue_head_t * q2d_outgoing_queue = NULL;
+#else
+static queue_state_t * q2d_outgoing_state = NULL;
+#endif
 
 // =================================
 // USED BY DISCORD LISTENER THREAD
@@ -185,6 +262,9 @@ typedef struct
 	u64_snowflake_t  rcuser;
 	u64_snowflake_t  rcgroup;
 	char             name[32];
+	long int         mirror_high;
+	long int         mirror_misc;
+	long int         mirror_chat;
 } q2d_bot_t;
 
 static q2d_bot_t q2d_bot;
@@ -225,7 +305,7 @@ static void q2d_message_to_game( char * msg )
 	if( !msg ) return;
 
 	size_t buflen  = strlen( msg ) + 2;
-	char * command = malloc( buflen );
+	char * command = (char *)malloc( buflen );
 
 	snprintf( command, buflen, "%s\n", msg );
 	queue_push( q2d_incoming_queue, command );
@@ -235,12 +315,13 @@ static void q2d_message_to_game( char * msg )
 static void q2d_on_bot_ready( struct discord * client )
 {
 	// set discord status
-	char *                  activity_json = "{"
-	                                        "\"name\": \"Quake II\","
-	                                        "\"type\": 0,"
-	                                        "\"url\": \"https://fraglimit.nephatrine.net/\","
-	                                        "\"details\": \"blah blah blah\""
-	                                        "}\0";
+	char * activity_json = "{"
+	                       "\"name\": \"Quake II\","
+	                       "\"type\": 0,"
+	                       "\"url\": \"https://fraglimit.nephatrine.net/\","
+	                       "\"details\": \"blah blah blah\""
+	                       "}\0";
+
 	struct discord_activity activity_info;
 	discord_activity_from_json( activity_json, strlen( activity_json ), &activity_info );
 
@@ -256,7 +337,11 @@ static void q2d_on_bot_ready( struct discord * client )
 	discord_set_presence( client, &presence_info );
 
 	// open for business
+#ifdef USE_DISCORD_OUTGOING
 	queue_set_state_if( q2d_outgoing_queue, q2d_bot.channel ? Q2D_STATE_READY : Q2D_STATE_CLOSED, Q2D_STATE_UNINITIALIZED );
+#else
+	state_set_state_if( q2d_outgoing_state, q2d_bot.channel ? Q2D_STATE_READY : Q2D_STATE_CLOSED, Q2D_STATE_UNINITIALIZED );
+#endif
 }
 
 static void q2d_on_command_ping( struct discord * client, const struct discord_message * msg )
@@ -302,6 +387,8 @@ static void q2d_on_command_rcon( struct discord * client, const struct discord_m
 
 static void q2d_on_command_say( struct discord * client, const struct discord_message * msg )
 {
+	client; // unused
+
 	if( msg->author->bot || ( q2d_bot.channel && msg->channel_id != q2d_bot.channel ) ) return;
 
 	char msg_buffer[320];
@@ -311,19 +398,13 @@ static void q2d_on_command_say( struct discord * client, const struct discord_me
 
 static void q2d_process_discord_queue( struct discord * client )
 {
+#ifdef USE_DISCORD_OUTGOING
 	queue_cmd_t * command = NULL;
-
-	// if we have been asked to shut down
-	if( queue_get_state( q2d_outgoing_queue ) == Q2D_STATE_CLOSING )
-	{
-		discord_shutdown( client );
-		return;
-	}
 
 	// bail out early so we don't hit mutex at all
 	if( q2d_outgoing_queue->head == NULL ) return;
 
-	while( command = queue_try_pop( q2d_outgoing_queue ) )
+	while( ( command = queue_try_pop( q2d_outgoing_queue ) ) )
 	{
 		if( q2d_bot.channel )
 		{
@@ -333,11 +414,27 @@ static void q2d_process_discord_queue( struct discord * client )
 			discord_create_message( client, q2d_bot.channel, &params, NULL );
 		}
 		free( command );
+
+		if( q2d_outgoing_queue->head == NULL ) break;
+	}
+#endif
+
+	// if we have been asked to shut down
+#ifdef USE_DISCORD_OUTGOING
+	if( queue_get_state( q2d_outgoing_queue ) == Q2D_STATE_CLOSING )
+#else
+	if( state_get_state( q2d_outgoing_state ) == Q2D_STATE_CLOSING )
+#endif
+	{
+		discord_shutdown( client );
+		return;
 	}
 }
 
 static void * q2d_main( void * arg )
 {
+	arg; // unused
+
 	orca_global_init();
 
 	// bot authorization
@@ -348,6 +445,11 @@ static void * q2d_main( void * arg )
 
 	if( q2d_bot.client )
 	{
+		// INTENTS
+		// We need this until we support slash commands.
+
+		discord_add_intents( q2d_bot.client, DISCORD_GATEWAY_GUILD_MESSAGES );
+
 		// register callbacks
 		discord_set_on_idle( q2d_bot.client, &q2d_process_discord_queue );
 		discord_set_on_ready( q2d_bot.client, &q2d_on_bot_ready );
@@ -363,7 +465,11 @@ static void * q2d_main( void * arg )
 	}
 
 	// closed for business
+#ifdef USE_DISCORD_OUTGOING
 	queue_set_state( q2d_outgoing_queue, Q2D_STATE_CLOSED );
+#else
+	state_set_state( q2d_outgoing_state, Q2D_STATE_CLOSED );
+#endif
 
 	// clean up after ourselves
 	if( q2d_bot.client )
@@ -380,6 +486,27 @@ static void * q2d_main( void * arg )
 // These *can* reference game code.
 // =================================
 
+void q2d_send_discord_message( char * command )
+{
+	// bail out early so we don't hit mutex at all
+	if( command == NULL ) return;
+
+#ifdef USE_DISCORD_OUTGOING
+	if( queue_get_state( q2d_outgoing_queue ) == Q2D_STATE_READY )
+#else
+	if( state_get_state( q2d_outgoing_state ) == Q2D_STATE_READY )
+#endif
+	{
+		if( q2d_bot.channel )
+		{
+			struct discord_create_message_params params = { .content = command };
+
+			discord_async_next( q2d_bot.client, NULL );
+			discord_create_message( q2d_bot.client, q2d_bot.channel, &params, NULL );
+		}
+	}
+}
+
 #ifdef true
 #	undef true
 #endif
@@ -391,29 +518,57 @@ static void * q2d_main( void * arg )
 void q2d_initialize()
 {
 	q2d_incoming_queue = queue_construct();
+#ifdef USE_DISCORD_OUTGOING
 	q2d_outgoing_queue = queue_construct();
+#else
+	q2d_outgoing_state     = state_construct();
+#endif
 
 	q2d_bot.client  = NULL;
 	q2d_bot.channel = 0;
 	q2d_bot.rcuser  = 0;
 	q2d_bot.rcgroup = 0;
 
+	q2d_bot.mirror_high = 0;
+	q2d_bot.mirror_misc = 0;
+	q2d_bot.mirror_chat = 0;
+
 	q2d_bot.config[0] = q2d_bot.config[sizeof( q2d_bot.config ) - 1] = 0;
 	q2d_bot.token[0] = q2d_bot.token[sizeof( q2d_bot.token ) - 1] = 0;
 	q2d_bot.name[0] = q2d_bot.name[sizeof( q2d_bot.name ) - 1] = 0;
 
 	cvar_t * discord_json    = gi.cvar( "discord_json", "q2discord.json", CVAR_NOSET );
-	cvar_t * discord_token   = gi.cvar( "discord_token", "", CVAR_NOSET );
-	cvar_t * discord_channel = gi.cvar( "discord_channel", "0", CVAR_NOSET );
-	cvar_t * discord_thread  = gi.cvar( "discord_thread", "", CVAR_NOSET );
-	cvar_t * discord_rcuser  = gi.cvar( "discord_rcuser", "", CVAR_NOSET );
-	cvar_t * discord_rcgroup = gi.cvar( "discord_rcgroup", "", CVAR_NOSET );
+	cvar_t * discord_token   = gi.cvar( "discord_token", "", CVAR_LATCH );
+	cvar_t * discord_channel = gi.cvar( "discord_channel", "0", CVAR_LATCH );
+	cvar_t * discord_thread  = gi.cvar( "discord_thread", "", CVAR_LATCH );
+	cvar_t * discord_rcuser  = gi.cvar( "discord_rcuser", "", CVAR_LATCH );
+	cvar_t * discord_rcgroup = gi.cvar( "discord_rcgroup", "", CVAR_LATCH );
+
+#ifdef USE_DISCORD_OUTGOING
+	cvar_t * mirror_high = gi.cvar( "mirror_high", "1", CVAR_LATCH );
+	cvar_t * mirror_misc = gi.cvar( "mirror_misc", "1", CVAR_LATCH );
+	cvar_t * mirror_chat = gi.cvar( "mirror_chat", "1", CVAR_LATCH );
+#else
+	cvar_t * mirror_unsafe = gi.cvar( "mirror_unsafe", "0", CVAR_LATCH );
+	cvar_t * mirror_high   = gi.cvar( "mirror_high", "1", CVAR_LATCH );
+	cvar_t * mirror_misc   = gi.cvar( "mirror_misc", "0", CVAR_LATCH );
+	cvar_t * mirror_chat   = gi.cvar( "mirror_chat", "0", CVAR_LATCH );
+#endif
 
 	if( discord_thread->string ) strncpy( q2d_bot.name, discord_thread->string, sizeof( q2d_bot.name ) - 1 );
 	if( discord_token->string ) strncpy( q2d_bot.token, discord_token->string, sizeof( q2d_bot.token ) - 1 );
 	if( discord_channel->string ) q2d_bot.channel = strtoull( discord_channel->string, NULL, 10 );
 	if( discord_rcuser->string ) q2d_bot.rcuser = strtoull( discord_rcuser->string, NULL, 10 );
 	if( discord_rcgroup->string ) q2d_bot.rcgroup = strtoull( discord_rcgroup->string, NULL, 10 );
+
+#ifndef USE_DISCORD_OUTGOING
+	if( mirror_unsafe->string && strtol( mirror_unsafe->string, NULL, 10 ) > 0 )
+#endif
+	{
+		if( mirror_high->string ) q2d_bot.mirror_high = strtol( mirror_high->string, NULL, 10 );
+		if( mirror_misc->string ) q2d_bot.mirror_misc = strtol( mirror_misc->string, NULL, 10 );
+		if( mirror_chat->string ) q2d_bot.mirror_chat = strtol( mirror_chat->string, NULL, 10 );
+	}
 
 	if( discord_json->string )
 	{
@@ -435,21 +590,31 @@ static void q2d_message_to_discord( char * msg )
 	if( !msg ) return;
 
 	size_t buflen  = strlen( msg ) + 1;
-	char * command = malloc( buflen );
+	char * command = (char *)malloc( buflen );
 
 	snprintf( command, buflen, "%s", msg );
+#ifdef USE_DISCORD_OUTGOING
 	queue_push( q2d_outgoing_queue, command );
+#else
+	// this seems to work in local testing but probably has data races
+	// also if lots of messages go through it will lag the server badly
+	q2d_send_discord_message( command );
+#endif
 	free( command );
 }
 
-void q2d_message_to_discord2( int level, const char * s )
+void q2d_message_to_discord2( int msglevel, const char * s )
 {
 	if( !s ) return;
+
+	if( msglevel == PRINT_HIGH && q2d_bot.mirror_high < 1 ) return;
+	if( msglevel == PRINT_MEDIUM && q2d_bot.mirror_misc < 1 ) return;
+	if( msglevel == PRINT_CHAT && q2d_bot.mirror_chat < 1 ) return;
 
 	char * cptr = strstr( s, ": " );
 	char   q2d_buffer[512];
 
-	switch( level )
+	switch( msglevel )
 	{
 		case PRINT_MEDIUM: snprintf( q2d_buffer, sizeof( q2d_buffer ), "*%s*", s ); break;
 		case PRINT_HIGH: snprintf( q2d_buffer, sizeof( q2d_buffer ), "**[SERVER]** %s", s ); break;
@@ -483,7 +648,7 @@ void q2d_process_game_queue()
 	// bail out early so we don't hit mutex at all
 	if( q2d_incoming_queue->head == NULL ) return;
 
-	while( command = queue_try_pop( q2d_incoming_queue ) )
+	while( ( command = queue_try_pop( q2d_incoming_queue ) ) )
 	{
 		if( strstr( command->msg, "say_discord " ) == command->msg )
 			gi.bprintf( PRINT_CHAT, "[Q2D] %s", command->msg + 12 );
@@ -495,8 +660,17 @@ void q2d_process_game_queue()
 
 void q2d_shutdown()
 {
+	int tries = 0;
+
 	queue_set_state( q2d_incoming_queue, Q2D_STATE_CLOSED );
+
+#ifdef USE_DISCORD_OUTGOING
 	queue_set_state_if( q2d_outgoing_queue, Q2D_STATE_CLOSING, ~Q2D_STATE_CLOSED );
+	while( queue_get_state( q2d_outgoing_queue ) == Q2D_STATE_CLOSING && tries++ < 3 ) sleep( 1 );
+#else
+	state_set_state_if( q2d_outgoing_state, Q2D_STATE_CLOSING, ~Q2D_STATE_CLOSED );
+	while( state_get_state( q2d_outgoing_state ) == Q2D_STATE_CLOSING && tries++ < 3 ) sleep( 1 );
+#endif
 
 #ifdef _GNU_SOURCE
 	struct timespec ts;
@@ -510,5 +684,9 @@ void q2d_shutdown()
 		pthread_join( q2d_bot_thread, NULL );
 
 	queue_destroy( q2d_incoming_queue );
+#ifdef USE_DISCORD_OUTGOING
 	queue_destroy( q2d_outgoing_queue );
+#else
+	state_destroy( q2d_outgoing_state );
+#endif
 }
