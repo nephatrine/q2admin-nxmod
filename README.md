@@ -58,4 +58,11 @@ Additionally, the following in-game console variables control some functionality
 - `discord_rcuser`: A single Discord user ID to allow the !rcon command.
 - `discord_rcgroup`: A single Discord role ID to allow the !rcon command.
 
+These options control outgoing message mirroring from in-game to discord:
+
+- `mirror_high`: Mirror HIGH messages such as player connections and server status.
+- `mirror_misc`: Mirror MEDIUM messages such as death messages.
+- `mirror_chat`: Mirror CHAT messages such as player chat.
+- `mirror_unsafe`: Send messages without WITH_DISCORD_OUTGOING. May be unstable!
+
 The standard Q2Admin configuration parameters are documented within the various configuration files.
