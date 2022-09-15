@@ -118,7 +118,8 @@ if(NX_TARGET_PLATFORM_POSIX AND NX_TARGET_ARCHITECTURE_NATIVE)
 	endif()
 endif()
 
-cmake_dependent_option(WITH_DISCORD "Enable Discord Support" OFF "bCanDiscord" OFF)
+cmake_dependent_option(WITH_DISCORD "Enable Discord Bot" ON "bCanDiscord" OFF)
+cmake_dependent_option(WITH_DISCORD_OUTGOING "Enable Game->Discord Bridge" ON "WITH_DISCORD" OFF)
 
 # ==== Orca Target ====
 
@@ -145,6 +146,10 @@ if(WITH_DISCORD)
 	set(ORCA_DISCORD_INCLUDE_DIR "${INSTALL_DIR}/include")
 	set(ORCA_DISCORD_LIBRARY "${INSTALL_DIR}/lib/libdiscord.a")
 	set(ORCA_DISCORD_DEPENDENCIES "curl" "Threads::Threads")
+
+	if(WITH_DISCORD_OUTGOING)
+		list(APPEND Q2ADMIN_DEFINES "USE_DISCORD_OUTGOING=1")
+	endif()
 endif()
 
 # ==== Q2Admin Target ====
