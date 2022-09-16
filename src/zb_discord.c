@@ -261,6 +261,7 @@ typedef struct
 	u64_snowflake_t  channel;
 	u64_snowflake_t  rcuser;
 	u64_snowflake_t  rcgroup;
+	u64_snowflake_t  appid;
 	char             name[32];
 	long int         mirror_high;
 	long int         mirror_misc;
@@ -344,11 +345,76 @@ static void q2d_on_bot_ready( struct discord * client )
 #endif
 }
 
+static void q2d_internal_ping( struct discord * client ) {}
+
+static void q2d_on_bot_interaction( struct discord * client, const struct discord_interaction * interaction )
+{
+	if( interaction->type != DISCORD_INTERACTION_APPLICATION_COMMAND ) return;
+	if( interaction->data == NULL ) return;
+
+	if( q2d_bot.channel && interaction->channel_id != q2d_bot.channel ) return;
+
+	if( strcmp( interaction->data->name, "q2ping" ) == 0 )
+	{
+		struct discord_interaction_response params = { .type = DISCORD_INTERACTION_CALLBACK_CHANNEL_MESSAGE_WITH_SOURCE,
+		                                               .data = &( struct discord_interaction_callback_data ){ .content = "**[SERVER]** PONG" } };
+		discord_async_next( client, NULL );
+		discord_create_interaction_response( client, interaction->id, interaction->token, &params, NULL );
+	}
+	else if( strcmp( interaction->data->name, "q2rcon" ) == 0 )
+	{
+		if( interaction->data->options == NULL || interaction->data->options[0] == NULL ) return;
+
+		int authorized = 0, r = 0;
+		if( q2d_bot.rcuser && interaction->member->user->id == q2d_bot.rcuser )
+			authorized = 1;
+		else if( q2d_bot.rcgroup && interaction->member->roles )
+			for( r = 0; interaction->member->roles[r]; ++r )
+				if( interaction->member->roles[r]->value == q2d_bot.rcgroup )
+				{
+					authorized = 1;
+					break;
+				}
+
+		if( authorized )
+		{
+			q2d_message_to_game( interaction->data->options[0]->value );
+
+			struct discord_interaction_response params = { .type = DISCORD_INTERACTION_CALLBACK_CHANNEL_MESSAGE_WITH_SOURCE,
+			                                               .data = &( struct discord_interaction_callback_data ){ .content = "**[SERVER]** Command Queued" } };
+			discord_async_next( client, NULL );
+			discord_create_interaction_response( client, interaction->id, interaction->token, &params, NULL );
+		}
+		else
+		{
+			struct discord_interaction_response params = { .type = DISCORD_INTERACTION_CALLBACK_CHANNEL_MESSAGE_WITH_SOURCE,
+			                                               .data = &( struct discord_interaction_callback_data ){ .content = "**[SERVER]** You are not authorized to run commands." } };
+			discord_async_next( client, NULL );
+			discord_create_interaction_response( client, interaction->id, interaction->token, &params, NULL );
+		}
+	}
+	else if( strcmp( interaction->data->name, "q2say" ) == 0 )
+	{
+		if( interaction->data->options == NULL || interaction->data->options[0] == NULL ) return;
+
+		char msg_buffer[320];
+		snprintf( msg_buffer, sizeof( msg_buffer ), "say_discord %s: %s", interaction->member->user->username, interaction->data->options[0]->value );
+		q2d_message_to_game( msg_buffer );
+
+		snprintf( msg_buffer, sizeof( msg_buffer ), "%s: %s", interaction->member->user->username, interaction->data->options[0]->value );
+
+		struct discord_interaction_response params = { .type = DISCORD_INTERACTION_CALLBACK_CHANNEL_MESSAGE_WITH_SOURCE,
+		                                               .data = &( struct discord_interaction_callback_data ){ .content = msg_buffer } };
+		discord_async_next( client, NULL );
+		discord_create_interaction_response( client, interaction->id, interaction->token, &params, NULL );
+	}
+}
+
 static void q2d_on_command_ping( struct discord * client, const struct discord_message * msg )
 {
 	if( msg->author->bot || ( q2d_bot.channel && msg->channel_id != q2d_bot.channel ) ) return;
-	struct discord_create_message_params params = { .content = "**[SERVER]** PONG" };
 
+	struct discord_create_message_params params = { .content = "**[SERVER]** PONG" };
 	discord_async_next( client, NULL );
 	discord_create_message( client, msg->channel_id, &params, NULL );
 }
@@ -371,15 +437,14 @@ static void q2d_on_command_rcon( struct discord * client, const struct discord_m
 	if( authorized )
 	{
 		q2d_message_to_game( msg->content );
-		struct discord_create_message_params params = { .content = "**[SERVER]** Command Queued" };
 
+		struct discord_create_message_params params = { .content = "**[SERVER]** Command Queued" };
 		discord_async_next( client, NULL );
 		discord_create_message( client, msg->channel_id, &params, NULL );
 	}
 	else
 	{
 		struct discord_create_message_params params = { .content = "**[SERVER]** You are not authorized to run commands." };
-
 		discord_async_next( client, NULL );
 		discord_create_message( client, msg->channel_id, &params, NULL );
 	}
@@ -445,10 +510,119 @@ static void * q2d_main( void * arg )
 
 	if( q2d_bot.client )
 	{
-		// INTENTS
-		// We need this until we support slash commands.
+		size_t sc = 0;
 
-		discord_add_intents( q2d_bot.client, DISCORD_GATEWAY_GUILD_MESSAGES );
+		// register slash commands
+		if( q2d_bot.appid )
+		{
+			struct discord_create_global_application_command_params say_sc = {
+			      .type               = DISCORD_APPLICATION_COMMAND_CHAT_INPUT,
+			      .name               = "q2say",
+			      .description        = "broadcast to quake2 server",
+			      .default_permission = true,
+			      .options            = ( struct discord_application_command_option *[] ){ &( struct discord_application_command_option ){
+			                                                                                     .type        = DISCORD_APPLICATION_COMMAND_OPTION_STRING,
+			                                                                                     .name        = "message",
+			                                                                                     .description = "message content",
+			                                                                                     .required    = true,
+                                                                                },
+			                                                                               NULL },
+			};
+			struct discord_create_global_application_command_params rcon_sc = {
+			      .type               = DISCORD_APPLICATION_COMMAND_CHAT_INPUT,
+			      .name               = "q2rcon",
+			      .description        = "send command to quake2 server",
+			      .default_permission = true,
+			      .options            = ( struct discord_application_command_option *[] ){ &( struct discord_application_command_option ){
+			                                                                                     .type        = DISCORD_APPLICATION_COMMAND_OPTION_STRING,
+			                                                                                     .name        = "command",
+			                                                                                     .description = "remote command",
+			                                                                                     .required    = true,
+                                                                                },
+			                                                                               NULL },
+			};
+			struct discord_create_global_application_command_params ping_sc = {
+			      .type               = DISCORD_APPLICATION_COMMAND_CHAT_INPUT,
+			      .name               = "q2ping",
+			      .description        = "request pong from quake2 server",
+			      .default_permission = true,
+			      .options            = NULL,
+			};
+
+			struct discord_application_command ** list_sc;
+			discord_get_global_application_commands( q2d_bot.client, q2d_bot.appid, &list_sc );
+
+			int found_say  = 0;
+			int found_rcon = 0;
+			int found_ping = 0;
+
+			if( list_sc )
+			{
+				while( list_sc[sc] )
+				{
+					if( strcmp( list_sc[sc]->name, say_sc.name ) == 0 )
+					{
+						if( list_sc[sc]->options == NULL )
+							found_say = 2;
+						else if( list_sc[sc]->options[0] == NULL )
+							found_say = 2;
+						else if( list_sc[sc]->options[1] != NULL )
+							found_say = 2;
+						else if( strcmp( list_sc[sc]->description, say_sc.description ) != 0 )
+							found_say = 2;
+						else if( strcmp( list_sc[sc]->options[0]->name, say_sc.options[0]->name ) != 0 )
+							found_say = 2;
+						else if( strcmp( list_sc[sc]->options[0]->description, say_sc.options[0]->description ) != 0 )
+							found_say = 2;
+						else if( list_sc[sc]->options[0]->required != say_sc.options[0]->required )
+							found_say = 2;
+						else
+							found_say = 1;
+
+						if( found_say == 2 ) discord_delete_global_application_command( q2d_bot.client, q2d_bot.appid, list_sc[sc]->id );
+					}
+					else if( strcmp( list_sc[sc]->name, rcon_sc.name ) == 0 )
+					{
+						if( list_sc[sc]->options == NULL )
+							found_rcon = 2;
+						else if( list_sc[sc]->options[0] == NULL )
+							found_rcon = 2;
+						else if( list_sc[sc]->options[1] != NULL )
+							found_rcon = 2;
+						else if( strcmp( list_sc[sc]->description, rcon_sc.description ) != 0 )
+							found_rcon = 2;
+						else if( strcmp( list_sc[sc]->options[0]->name, rcon_sc.options[0]->name ) != 0 )
+							found_rcon = 2;
+						else if( strcmp( list_sc[sc]->options[0]->description, rcon_sc.options[0]->description ) != 0 )
+							found_rcon = 2;
+						else if( list_sc[sc]->options[0]->required != rcon_sc.options[0]->required )
+							found_rcon = 2;
+						else
+							found_rcon = 1;
+
+						if( found_rcon == 2 ) discord_delete_global_application_command( q2d_bot.client, q2d_bot.appid, list_sc[sc]->id );
+					}
+					else if( strcmp( list_sc[sc]->name, ping_sc.name ) == 0 )
+					{
+						if( list_sc[sc]->options != NULL && list_sc[sc]->options[0] != NULL )
+							found_ping = 2;
+						else if( strcmp( list_sc[sc]->description, ping_sc.description ) != 0 )
+							found_ping = 2;
+						else
+							found_ping = 1;
+
+						if( found_ping == 2 ) discord_delete_global_application_command( q2d_bot.client, q2d_bot.appid, list_sc[sc]->id );
+					}
+
+					++sc;
+				}
+				discord_application_command_list_free( list_sc );
+			}
+
+			if( found_say != 1 ) discord_create_global_application_command( q2d_bot.client, q2d_bot.appid, &say_sc, NULL );
+			if( found_rcon != 1 ) discord_create_global_application_command( q2d_bot.client, q2d_bot.appid, &rcon_sc, NULL );
+			if( found_ping != 1 ) discord_create_global_application_command( q2d_bot.client, q2d_bot.appid, &ping_sc, NULL );
+		}
 
 		// register callbacks
 		discord_set_on_idle( q2d_bot.client, &q2d_process_discord_queue );
@@ -456,6 +630,7 @@ static void * q2d_main( void * arg )
 		discord_set_on_command( q2d_bot.client, "ping", &q2d_on_command_ping );
 		discord_set_on_command( q2d_bot.client, "rcon", &q2d_on_command_rcon );
 		discord_set_on_command( q2d_bot.client, "say", &q2d_on_command_say );
+		discord_set_on_interaction_create( q2d_bot.client, &q2d_on_bot_interaction );
 
 		// create thread if needed
 		q2d_bot.channel = q2d_get_thread_id( q2d_bot.client, q2d_bot.channel, q2d_bot.name );
@@ -528,6 +703,7 @@ void q2d_initialize()
 	q2d_bot.channel = 0;
 	q2d_bot.rcuser  = 0;
 	q2d_bot.rcgroup = 0;
+	q2d_bot.appid   = 0;
 
 	q2d_bot.mirror_high = 0;
 	q2d_bot.mirror_misc = 0;
@@ -543,6 +719,7 @@ void q2d_initialize()
 	cvar_t * discord_thread  = gi.cvar( "discord_thread", "", CVAR_LATCH );
 	cvar_t * discord_rcuser  = gi.cvar( "discord_rcuser", "", CVAR_LATCH );
 	cvar_t * discord_rcgroup = gi.cvar( "discord_rcgroup", "", CVAR_LATCH );
+	cvar_t * discord_appid   = gi.cvar( "discord_appid", "", CVAR_LATCH );
 
 #ifdef USE_DISCORD_OUTGOING
 	cvar_t * mirror_high = gi.cvar( "mirror_high", "1", CVAR_LATCH );
@@ -560,6 +737,7 @@ void q2d_initialize()
 	if( discord_channel->string ) q2d_bot.channel = strtoull( discord_channel->string, NULL, 10 );
 	if( discord_rcuser->string ) q2d_bot.rcuser = strtoull( discord_rcuser->string, NULL, 10 );
 	if( discord_rcgroup->string ) q2d_bot.rcgroup = strtoull( discord_rcgroup->string, NULL, 10 );
+	if( discord_appid->string ) q2d_bot.appid = strtoull( discord_appid->string, NULL, 10 );
 
 #ifndef USE_DISCORD_OUTGOING
 	if( mirror_unsafe->string && strtol( mirror_unsafe->string, NULL, 10 ) > 0 )

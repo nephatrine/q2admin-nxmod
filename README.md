@@ -57,6 +57,7 @@ Additionally, the following in-game console variables control some functionality
 - `discord_thread`: If set, create a thread in the channel with this name.
 - `discord_rcuser`: A single Discord user ID to allow the !rcon command.
 - `discord_rcgroup`: A single Discord role ID to allow the !rcon command.
+- `discord_appid`: The Discord application ID to allow slash command registration.
 
 These options control outgoing message mirroring from in-game to discord:
 
