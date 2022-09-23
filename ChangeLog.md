@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0]
+
+### Changed
+- Rewrote Discord Bridge using Concord.
+- All Discord-related cvar names changed.
+
 ## [1.18.0]
 
 ### Added
