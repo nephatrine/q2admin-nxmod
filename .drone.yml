@@ -13,7 +13,7 @@ steps:
   - mkdir build-alpine
   - cd build-alpine
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-alpine-linux-musl" -DQ2ADMIN_NAME="game" ..
-  - ninja orca && ninja
+  - ninja concord && ninja
   - tar -czvf q2admin-nxmod_x86_64-alpine-linux-musl.tar.gz game.so
   - cd ../data
   - tar -czvf ../build-alpine/q2admin-nxmod_noarch.tar.gz *.txt *.json
@@ -23,7 +23,7 @@ steps:
   - mkdir build-ubuntu
   - cd build-ubuntu
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-ubuntu-linux-gnu" -DQ2ADMIN_NAME="game" ..
-  - ninja orca && ninja
+  - ninja concord && ninja
   - tar -czvf q2admin-nxmod_x86_64-ubuntu-linux-gnu.tar.gz game.so
 - name: build-redhat
   image: nephatrine/nxbuilder:almalinux
@@ -31,7 +31,7 @@ steps:
   - mkdir build-redhat
   - cd build-redhat
   - cmake -GNinja -DNXPACKAGE_TRIPLET="x86_64-redhat-linux-gnu" -DQ2ADMIN_NAME="game" ..
-  - ninja orca && ninja
+  - ninja concord && ninja
   - tar -czvf q2admin-nxmod_x86_64-redhat-linux-gnu.tar.gz game.so
 - name: publish-web
   image: nephatrine/nxbuilder:alpine
@@ -96,6 +96,6 @@ trigger:
 
 ---
 kind: signature
-hmac: ba6a8c88e2f8853167a35f8ed4bf2d90ab44874fd356fd3755cf56bdc993bc20
+hmac: 44d81da907d41e63b6d0fe5c3392c74a31d7ce3111f61d94c3df9349bb853daf
 
 ...

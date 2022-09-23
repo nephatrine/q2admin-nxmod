@@ -408,9 +408,6 @@ void InitGame (void)
 	if(q2adminrunmode == 0)
 		{
 			dllglobals->Init();
-#ifdef USE_DISCORD
-			q2d_message_to_discord2(PRINT_HIGH, "**=== Open For Business ===**");
-#endif
 			copyDllInfo();
 			return;
 		}
@@ -419,10 +416,6 @@ void InitGame (void)
 	STARTPERFORMANCE(2);
 	dllglobals->Init(); //be carefull with all functions called from this one (like dprintf_internal) to not use proxyinfo pointer because it's not initialized yet. -Harven
 	STOPPERFORMANCE(2, "mod->InitGame", 0, NULL);
-	
-#ifdef USE_DISCORD
-	q2d_message_to_discord2(PRINT_HIGH, "**=== Open For Business ===**");
-#endif
 	
 	copyDllInfo();
 	

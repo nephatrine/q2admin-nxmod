@@ -19,7 +19,7 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(
 	Q2Admin
-	VERSION 1.18.0
+	VERSION 1.19.0
 	DESCRIPTION "Quake II Game Proxy Mod"
 	HOMEPAGE_URL "https://code.nephatrine.net/nephatrine/q2admin-nxmod"
 	LANGUAGES C)
@@ -119,12 +119,12 @@ if(NX_TARGET_PLATFORM_POSIX AND NX_TARGET_ARCHITECTURE_NATIVE)
 endif()
 
 cmake_dependent_option(WITH_DISCORD "Enable Discord Bot" ON "bCanDiscord" OFF)
-cmake_dependent_option(WITH_DISCORD_OUTGOING "Enable Game->Discord Bridge" ON "WITH_DISCORD" OFF)
 
 # ==== Orca Target ====
 
-unset(ORCA_DISCORD_INCLUDE_DIR)
-unset(ORCA_DISCORD_LIBRARY)
+unset(DISCORD_INCLUDE_DIR)
+unset(DISCORD_LIBRARY)
+unset(DISCORD_DEPENDENCIES)
 
 if(WITH_DISCORD)
 	list(APPEND Q2ADMIN_SOURCES "src/zb_discord.c" "src/zb_discord.h")
@@ -132,24 +132,20 @@ if(WITH_DISCORD)
 
 	include(ExternalProject)
 	ExternalProject_Add(
-		orca
-		GIT_REPOSITORY "https://github.com/cee-studio/orca.git"
-		GIT_TAG "ef7cc8d1eca1468c75fde7ba9f183b41c26ef1bc"
-		GIT_SHALLOW ON
+		concord
+		GIT_REPOSITORY "https://github.com/Cogmasters/concord.git"
+		GIT_TAG "1da91a6641f668042fecd4a318923087bdb87739"
+		GIT_SHALLOW OFF
 		GIT_PROGRESS ON
 		CONFIGURE_COMMAND ""
-		BUILD_COMMAND make discord github
+		BUILD_COMMAND CFLAGS=\"-fPIC\" make
 		BUILD_IN_SOURCE ON
 		INSTALL_COMMAND "${CMAKE_COMMAND}" -E env PREFIX="<INSTALL_DIR>" make install)
 
-	ExternalProject_Get_Property(orca INSTALL_DIR)
-	set(ORCA_DISCORD_INCLUDE_DIR "${INSTALL_DIR}/include")
-	set(ORCA_DISCORD_LIBRARY "${INSTALL_DIR}/lib/libdiscord.a")
-	set(ORCA_DISCORD_DEPENDENCIES "curl" "Threads::Threads")
-
-	if(WITH_DISCORD_OUTGOING)
-		list(APPEND Q2ADMIN_DEFINES "USE_DISCORD_OUTGOING=1")
-	endif()
+	ExternalProject_Get_Property(concord INSTALL_DIR)
+	set(DISCORD_INCLUDE_DIR "${INSTALL_DIR}/include")
+	set(DISCORD_LIBRARY "${INSTALL_DIR}/lib/libdiscord.a")
+	set(DISCORD_DEPENDENCIES "curl" "Threads::Threads")
 endif()
 
 # ==== Q2Admin Target ====
@@ -160,13 +156,13 @@ nx_target(
 	GENERATE_EXPORT "generated/g_export.h" Q2ADMIN
 	GENERATE_VERSION "generated/g_version.h" Q2ADMIN
 	DEFINES PRIVATE ${Q2ADMIN_DEFINES}
-	DEPENDS PRIVATE "${ORCA_DISCORD_LIBRARY}" ${ORCA_DISCORD_DEPENDENCIES} ${CMAKE_DL_LIBS}
+	DEPENDS PRIVATE "${DISCORD_LIBRARY}" ${DISCORD_DEPENDENCIES} ${CMAKE_DL_LIBS}
 	FEATURES PRIVATE "c_std_99"
-	INCLUDES PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated" "${ORCA_DISCORD_INCLUDE_DIR}"
+	INCLUDES PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated" "${DISCORD_INCLUDE_DIR}"
 	SOURCES PRIVATE ${Q2ADMIN_SOURCES})
 
 if(WITH_DISCORD)
-	add_dependencies("${Q2ADMIN_TARGETS}" "orca")
+	add_dependencies("${Q2ADMIN_TARGETS}" "concord")
 endif()
 
 # ==== Project End ====

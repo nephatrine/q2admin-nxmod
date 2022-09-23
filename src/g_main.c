@@ -92,10 +92,6 @@ void ShutdownGame (void)
 			STARTPERFORMANCE(2);
 		}
 		
-#ifdef USE_DISCORD
-	q2d_message_to_discord2(PRINT_HIGH, "**=== Closing Time ===**");
-#endif
-	
 	// reset the password just in case something has gone wrong...
 	lrcon_reset_rcon_password(0, 0, 0);
 	dllglobals->Shutdown();
